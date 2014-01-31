@@ -812,7 +812,12 @@ protected:
 			else if (!isEOI() && (currentChar == '\\'))
 			{
 				readChar();
-				insertCharacter(currentChar);
+				if (currentChar == 'n') insertCharacter('\n');
+				else if (currentChar == 't') insertCharacter('\t');
+				else if (currentChar == 's') insertCharacter(' ');
+				else if (currentChar == 'r') insertCharacter('\r');
+				else if (currentChar == '0') insertCharacter('\0');
+				else insertCharacter(currentChar);
 				readChar();
 				return true;
 			}
@@ -897,6 +902,7 @@ protected:
 			else if (currentChar == 't') insertIntoSet<dummy>(last = '\t');
 			else if (currentChar == 's') insertIntoSet<dummy>(last = ' ');
 			else if (currentChar == 'r') insertIntoSet<dummy>(last = '\r');
+			else if (currentChar == '0') insertIntoSet<dummy>(last = '\0');
 			else insertIntoSet<dummy>(last = currentChar);
 		}
 
