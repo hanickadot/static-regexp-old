@@ -15,7 +15,26 @@ template <char c> struct Chr {
 	}
 };
 
+template <wchar_t c> struct WChr {
+	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t, size_t) {
+		if (*str == c) {
+			pos++;
+			return true;
+		} else return false;
+	}
+};
+
 template <char a, char b, char... rest> struct CSet {
+	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t, size_t) {
+		if (matchCharacter(*str)) {
+			pos++;
+			return true;
+		} else return false;
+	}
+	template <typename chartype> static inline bool matchCharacter(chartype u) { return (u >= a && u <= b) || CSet<rest...>::matchCharacter(u); }
+};
+
+template <wchar_t a, wchar_t b, wchar_t... rest> struct WSet {
 	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t, size_t) {
 		if (matchCharacter(*str)) {
 			pos++;
@@ -35,6 +54,16 @@ template <char a, char b> struct CSet<a, b> {
 	template <typename chartype> static inline bool matchCharacter(chartype u) { return (u >= a && u <= b); }
 };
 
+template <wchar_t a, wchar_t b> struct WSet<a, b> {
+	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t, size_t) {
+		if (*str >= a && *str <= b) {
+			pos++;
+			return true;
+		} else return false;
+	}
+	template <typename chartype> static inline bool matchCharacter(chartype u) { return (u >= a && u <= b); }
+};
+
 template <char a, char b, char... rest> struct CNegSet {
 	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t, size_t) {
 		if (matchCharacter(*str)) {
@@ -45,7 +74,27 @@ template <char a, char b, char... rest> struct CNegSet {
 	template <typename chartype> static inline bool matchCharacter(chartype u) { return !(u >= a && u <= b) && CNegSet<rest...>::matchCharacter(u); }
 };
 
+template <wchar_t a, wchar_t b, wchar_t... rest> struct WNegSet {
+	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t, size_t) {
+		if (matchCharacter(*str)) {
+			pos++;
+			return true;
+		} else return false;
+	}
+	template <typename chartype> static inline bool matchCharacter(chartype u) { return !(u >= a && u <= b) && CNegSet<rest...>::matchCharacter(u); }
+};
+
 template <char a, char b> struct CNegSet<a, b> {
+	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t, size_t) {
+		if (!(*str >= a && * str <= b)) {
+			pos++;
+			return true;
+		} else return false;
+	}
+	template <typename chartype> static inline bool matchCharacter(chartype u) { return !(u >= a && u <= b); }
+};
+
+template <wchar_t a, wchar_t b> struct WNegSet<a, b> {
 	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t, size_t) {
 		if (!(*str >= a && * str <= b)) {
 			pos++;
