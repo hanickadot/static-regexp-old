@@ -7,7 +7,7 @@
 
 namespace SRegExp {
 template <char c> struct Chr {
-	static inline bool smatch(const char * str, size_t & pos, size_t, size_t) {
+	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t, size_t) {
 		if (*str == c) {
 			pos++;
 			return true;
@@ -16,47 +16,47 @@ template <char c> struct Chr {
 };
 
 template <char a, char b, char... rest> struct CSet {
-	static inline bool smatch(const char * str, size_t & pos, size_t, size_t) {
+	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t, size_t) {
 		if (matchCharacter(*str)) {
 			pos++;
 			return true;
 		} else return false;
 	}
-	static inline bool matchCharacter(char u) { return (u >= a && u <= b) || CSet<rest...>::matchCharacter(u); }
+	template <typename chartype> static inline bool matchCharacter(chartype u) { return (u >= a && u <= b) || CSet<rest...>::matchCharacter(u); }
 };
 
 template <char a, char b> struct CSet<a, b> {
-	static inline bool smatch(const char * str, size_t & pos, size_t, size_t) {
+	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t, size_t) {
 		if (*str >= a && *str <= b) {
 			pos++;
 			return true;
 		} else return false;
 	}
-	static inline bool matchCharacter(char u) { return (u >= a && u <= b); }
+	template <typename chartype> static inline bool matchCharacter(chartype u) { return (u >= a && u <= b); }
 };
 
 template <char a, char b, char... rest> struct CNegSet {
-	static inline bool smatch(const char * str, size_t & pos, size_t, size_t) {
+	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t, size_t) {
 		if (matchCharacter(*str)) {
 			pos++;
 			return true;
 		} else return false;
 	}
-	static inline bool matchCharacter(char u) { return !(u >= a && u <= b) && CNegSet<rest...>::matchCharacter(u); }
+	template <typename chartype> static inline bool matchCharacter(chartype u) { return !(u >= a && u <= b) && CNegSet<rest...>::matchCharacter(u); }
 };
 
 template <char a, char b> struct CNegSet<a, b> {
-	static inline bool smatch(const char * str, size_t & pos, size_t, size_t) {
+	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t, size_t) {
 		if (!(*str >= a && * str <= b)) {
 			pos++;
 			return true;
 		} else return false;
 	}
-	static inline bool matchCharacter(char u) { return !(u >= a && u <= b); }
+	template <typename chartype> static inline bool matchCharacter(chartype u) { return !(u >= a && u <= b); }
 };
 
 template <typename Inner, typename... rest> struct Seq {
-	static inline bool smatch(const char * str, size_t & pos, size_t cpos, size_t deep) {
+	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t cpos, size_t deep) {
 		size_t tmp{pos};
 		if (Inner::smatch(str, tmp, cpos, deep) && Seq<rest...>::smatch(str + tmp - pos, tmp, cpos + tmp, deep)) {
 			pos = tmp;
@@ -66,13 +66,13 @@ template <typename Inner, typename... rest> struct Seq {
 };
 
 template <typename Inner> struct Seq<Inner> {
-	static inline bool smatch(const char * str, size_t & pos, size_t cpos, size_t deep) {
+	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t cpos, size_t deep) {
 		return Inner::smatch(str, pos, cpos, deep);
 	}
 };
 
 template <char c, char... rest> struct Str {
-	static inline bool smatch(const char * str, size_t & pos, size_t cpos, size_t deep) {
+	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t cpos, size_t deep) {
 		size_t tmp{pos};
 		if (Chr<c>::smatch(str, tmp, cpos, deep) && Str<rest...>::smatch(str + tmp - pos, tmp, cpos + tmp, deep)) {
 			pos = tmp;
@@ -82,26 +82,26 @@ template <char c, char... rest> struct Str {
 };
 
 template <char c> struct Str<c> {
-	static inline bool smatch(const char * str, size_t & pos, size_t cpos, size_t deep) {
+	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t cpos, size_t deep) {
 		return Chr<c>::smatch(str, pos, cpos, deep);
 	}
 };
 
 template <typename Inner, typename... rest> struct Sel {
-	static inline bool smatch(const char * str, size_t & pos, size_t cpos, size_t deep) {
+	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t cpos, size_t deep) {
 		if (Inner::smatch(str, pos, cpos, deep)) return true;
 		else return Sel<rest...>::smatch(str, pos, cpos, deep);
 	}
 };
 
 template <typename Inner> struct Sel<Inner> {
-	static inline bool smatch(const char * str, size_t & pos, size_t cpos, size_t deep) {
+	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t cpos, size_t deep) {
 		return Inner::smatch(str, pos, cpos, deep);
 	}
 };
 
 struct Any {
-	static inline bool smatch(const char * str, size_t & pos, size_t, size_t) {
+	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t, size_t) {
 		if (*str) {
 			pos++;
 			return true;
@@ -110,7 +110,7 @@ struct Any {
 };
 
 template <typename Inner, typename... rest> struct Star {
-	static inline bool smatch(const char * str, size_t & pos, size_t cpos, size_t deep) {
+	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t cpos, size_t deep) {
 		size_t tmp{0};
 		if (Seq<rest...>::smatch(str, tmp, cpos, deep)) {
 			pos += tmp;
@@ -125,7 +125,7 @@ template <typename Inner, typename... rest> struct Star {
 };
 
 template <typename Inner> struct Star<Inner> {
-	static inline bool smatch(const char * str, size_t & pos, size_t cpos, size_t deep) {
+	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t cpos, size_t deep) {
 		size_t tmp{0};
 		if (Inner::smatch(str + tmp, tmp, cpos, deep)) {
 			for (;;) if (!Inner::smatch(str + tmp, tmp, cpos + tmp, deep)) {
@@ -137,7 +137,7 @@ template <typename Inner> struct Star<Inner> {
 };
 
 template <typename Inner, typename... rest> struct Plus {
-	static inline bool smatch(const char * str, size_t & pos, size_t cpos, size_t deep) {
+	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t cpos, size_t deep) {
 		size_t tmp{0};
 		if (Inner::smatch(str + tmp, tmp, cpos, deep)) {
 			for (;;) if (Seq<rest...>::smatch(str + tmp, tmp, cpos + tmp, deep)) {
@@ -150,7 +150,7 @@ template <typename Inner, typename... rest> struct Plus {
 };
 
 template <typename Inner> struct Plus<Inner> {
-	static inline bool smatch(const char * str, size_t & pos, size_t cpos, size_t deep) {
+	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t cpos, size_t deep) {
 		size_t tmp{0};
 		if (Inner::smatch(str + tmp, tmp, cpos, deep))
 			for (;;) if (!Inner::smatch(str + tmp, tmp, cpos + tmp, deep)) {
@@ -162,7 +162,7 @@ template <typename Inner> struct Plus<Inner> {
 };
 
 template <typename Inner, typename... rest> struct Opt {
-	static inline bool smatch(const char * str, size_t & pos, size_t cpos, size_t deep) {
+	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t cpos, size_t deep) {
 		size_t tmp{0};
 		if (Seq<rest...>::smatch(str, pos, cpos, deep + 1))
 			return true;
@@ -175,19 +175,19 @@ template <typename Inner, typename... rest> struct Opt {
 };
 
 struct End {
-	static inline bool smatch(const char * str, size_t &, size_t, size_t) {
+	template <typename chartype> static inline bool smatch(const chartype * str, size_t &, size_t, size_t) {
 		return (!* str);
 	}
 };
 
 struct Begin {
-	static inline bool smatch(const char *, size_t &, size_t cpos, size_t) {
+	template <typename chartype> static inline bool smatch(const chartype *, size_t &, size_t cpos, size_t) {
 		return cpos == 0;
 	}
 };
 
 template <typename... rest> struct Eat {
-	static inline bool smatch(const char * str, size_t &, size_t cpos, size_t deep) {
+	template <typename chartype> static inline bool smatch(const chartype * str, size_t &, size_t cpos, size_t deep) {
 		size_t tmp{0};
 		while (*(str + tmp)) {
 			if (Seq<rest...>::smatch(str + tmp, tmp, cpos + tmp, deep)) return true;
@@ -196,6 +196,16 @@ template <typename... rest> struct Eat {
 		return false;
 	}
 };
+
+template <typename... rest> bool sregexp_smatch(const wchar_t * str) {
+	size_t tmp{0};
+	return Eat<rest...>::smatch(str, tmp, tmp, 0);
+}
+
+template <typename... rest> bool sregexp_smatch(std::wstring str) {
+	size_t tmp{0};
+	return Eat<rest...>::smatch(str.c_str(), tmp, tmp, 0);
+}
 
 template <typename... rest> bool sregexp_smatch(const char * str) {
 	size_t tmp{0};
@@ -212,6 +222,14 @@ protected:
 	Eat<rest...> definition;
 
 public:
+	bool operator()(const wchar_t * str) {
+		size_t tmp{0};
+		return definition.smatch(str, tmp, tmp, 0);
+	}
+	bool operator()(const std::wstring &str) {
+		size_t tmp{0};
+		return definition.smatch(str.c_str(), tmp, tmp, 0);
+	}
 	bool operator()(const char * str) {
 		size_t tmp{0};
 		return definition.smatch(str, tmp, tmp, 0);
