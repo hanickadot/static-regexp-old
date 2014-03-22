@@ -197,7 +197,7 @@ template <wchar_t a, wchar_t b, wchar_t... rest> struct WNegSet {
 
 template <char a, char b> struct CNegSet<a, b> {
 	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t, size_t) {
-		if (!(*str >= a && * str <= b)) {
+		if (!(*str >= a && *str <= b)) {
 			pos++;
 			return true;
 		} else return false;
@@ -211,7 +211,7 @@ template <char a, char b> struct CNegSet<a, b> {
 
 template <wchar_t a, wchar_t b> struct WNegSet<a, b> {
 	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t, size_t) {
-		if (!(*str >= a && * str <= b)) {
+		if (!(*str >= a && *str <= b)) {
 			pos++;
 			return true;
 		} else return false;
@@ -468,7 +468,7 @@ template <typename Inner, typename... rest> struct Opt {
 
 struct End {
 	template <typename chartype> inline bool smatch(const chartype * str, size_t &, size_t, size_t) {
-		return (!* str);
+		return (!*str);
 	}
 	inline void reset() { }
 	template <unsigned int id> inline bool get(CatchReturn &) {
