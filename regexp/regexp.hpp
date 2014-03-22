@@ -8,14 +8,12 @@
 
 namespace SRegExp {
 
-struct Catches
-{
+struct Catches {
 	size_t start;
 	size_t size;
 };
 
-struct CatchReturn
-{
+struct CatchReturn {
 protected:
 	Catches * vdata;
 	size_t vsize;
@@ -23,29 +21,24 @@ public:
 	size_t size() {
 		return vsize;
 	}
-	const Catches * data()
-	{
+	const Catches * data() {
 		return vdata;
 	}
 	CatchReturn(): vdata{nullptr}, vsize{0} { }
 	CatchReturn(Catches * ldata, size_t lsize): vdata{ldata}, vsize{lsize} { }
-	Catches * begin() const
-	{
+	Catches * begin() const {
 		return vdata;
 	}
-	Catches * end() const
-	{
+	Catches * end() const {
 		return (vdata + vsize);
 	}
 };
 	
-template <unsigned int id, size_t max, typename Inner> struct StaticCatch
-{
+template <unsigned int id, size_t max, typename Inner> struct StaticCatch {
 	Inner exp_inner;
 	size_t count{0};
 	Catches catches[max];
-	template <typename chartype> inline bool smatch(const chartype str, size_t & pos, size_t cpos, size_t deep)
-	{
+	template <typename chartype> inline bool smatch(const chartype str, size_t & pos, size_t cpos, size_t deep) {
 		size_t start{pos};
 		bool ret{exp_inner.smatch(str,pos,cpos,deep)};
 		if (ret) {
@@ -67,12 +60,10 @@ template <unsigned int id, size_t max, typename Inner> struct StaticCatch
 	}
 };
 
-template <unsigned int id, typename Inner> struct DynamicCatch
-{
+template <unsigned int id, typename Inner> struct DynamicCatch {
 	Inner exp_inner;	
 	std::vector<Catches> catches;
-	template <typename chartype> inline bool smatch(const chartype str, size_t & pos, size_t cpos, size_t deep)
-	{
+	template <typename chartype> inline bool smatch(const chartype str, size_t & pos, size_t cpos, size_t deep) {
 		size_t start{pos};
 		bool ret{exp_inner.smatch(str,pos,cpos,deep)};
 		if (ret) {
