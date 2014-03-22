@@ -549,8 +549,7 @@ public:
 		size_t tmp{0};
 		return definition.smatch(str.c_str(), tmp, tmp, 0);
 	}
-	template <unsigned int id> CatchReturn get()
-	{
+	template <unsigned int id> CatchReturn get() {
 		CatchReturn ret;
 		if (definition.template get<id>(ret)) {
 			return ret;
@@ -559,8 +558,7 @@ public:
 			return {nullptr,0};
 		}
 	}
-	template <typename T> bool match(const T str)
-	{
+	template <typename T> bool match(const T str) {
 		definition.reset();
 		return operator()(str);
 	}
