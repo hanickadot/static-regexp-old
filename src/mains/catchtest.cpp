@@ -7,7 +7,7 @@ using namespace SRegExp;
 
 int main (int argc, char const *argv[])
 {
-	StaticRegExp< Seq<Begin,StaticCatch<1,1, Plus<CSet<'a','z'>>>,Str<0x3a,0x2f,0x2f>,StaticCatch<2,1, Plus<CSet<'a','z'>>>,Star<Seq<Chr<0x2e>,DynamicCatch<3, Plus<CSet<'a','z'>>>>, Seq<Chr<0x2f>,StaticCatch<4,1, Star<Any>>,End>>> > regexp;
+	StaticRegExp< Seq<Begin,OneCatch<1, Plus<CSet<'a','z'>>>,Str<0x3a,0x2f,0x2f>,OneCatch<2, Plus<CSet<'a','z'>>>,Star<Seq<Chr<0x2e>,DynamicCatch<3, Plus<CSet<'a','z'>>>>, Seq<Chr<0x2f>,OneCatch<4, Star<Any>>,End>>> > regexp;
 	if (argc >= 2)
 	{
 		if (regexp.match(argv[1]))

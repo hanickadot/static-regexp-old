@@ -60,6 +60,8 @@ template <unsigned int id, size_t max, typename Inner> struct StaticCatch {
 	}
 };
 
+template <unsigned int id, typename Inner> using OneCatch = StaticCatch<id, 1, Inner>;
+
 template <unsigned int id, typename Inner> struct DynamicCatch {
 	Inner exp_inner;	
 	std::vector<Catches> catches;
