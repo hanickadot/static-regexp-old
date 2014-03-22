@@ -18,7 +18,7 @@ protected:
 		virtual ~Part() {}
 		virtual void print() {};
 		virtual const char * type() {return "part";}
-		virtual void createRegexp(std::stringstream &, bool) { };
+		virtual void createRegexp(std::stringstream &, bool, unsigned int &) { };
 	};
 	using PartStack = std::stack<Part*>;
 	using PartVector = std::vector<Part*>;
@@ -42,7 +42,7 @@ protected:
 		{
 			
 		}
-		virtual void createRegexp(std::stringstream & ss, bool ns)
+		virtual void createRegexp(std::stringstream & ss, bool ns, unsigned int &)
 		{
 			if (ns) ss << "SRegExp::";
 			ss << "Begin";
@@ -57,7 +57,7 @@ protected:
 		{
 			
 		}
-		virtual void createRegexp(std::stringstream & ss, bool ns)
+		virtual void createRegexp(std::stringstream & ss, bool ns, unsigned int &)
 		{
 			if (ns) ss << "SRegExp::";
 			ss << "Any";
@@ -72,7 +72,7 @@ protected:
 		{
 			
 		}
-		virtual void createRegexp(std::stringstream & ss, bool ns)
+		virtual void createRegexp(std::stringstream & ss, bool ns, unsigned int &)
 		{
 			if (ns) ss << "SRegExp::";
 			ss << "End";
@@ -168,7 +168,7 @@ protected:
 			}
 			parts = tmp;
 		}
-		virtual void createRegexp(std::stringstream & ss, bool ns)
+		virtual void createRegexp(std::stringstream & ss, bool ns, unsigned int & catcher)
 		{
 			optimize();
 			if (ns) ss << "SRegExp::";
@@ -178,7 +178,7 @@ protected:
 			{
 				if (first) first = false;
 				else ss << ',';
-				part->createRegexp(ss,ns);
+				part->createRegexp(ss,ns,catcher);
 			}
 			ss << ">";
 		}
@@ -204,7 +204,7 @@ protected:
 			}
 			printf("\"");
 		}
-		virtual void createRegexp(std::stringstream & ss, bool ns)
+		virtual void createRegexp(std::stringstream & ss, bool ns, unsigned int &)
 		{
 			if (ns) ss << "SRegExp::";
 			ss << "Str<";
@@ -233,7 +233,7 @@ protected:
 		{
 			printf("'%c'",c);
 		}
-		virtual void createRegexp(std::stringstream & ss, bool ns)
+		virtual void createRegexp(std::stringstream & ss, bool ns, unsigned int &)
 		{
 			if (ns) ss << "SRegExp::";
 			if (std::isalpha(c)) ss << "Chr<'" << c << "'>";
@@ -292,7 +292,7 @@ protected:
 			if (!empty) out.insert({a,b});
 			return out;
 		}
-		virtual void createRegexp(std::stringstream & ss, bool ns)
+		virtual void createRegexp(std::stringstream & ss, bool ns, unsigned int &)
 		{
 			normalize();
 			std::set<CPair> calcset = normalize();
@@ -346,7 +346,7 @@ protected:
 			}
 			printf("}");
 		}
-		virtual void createRegexp(std::stringstream & ss, bool ns)
+		virtual void createRegexp(std::stringstream & ss, bool ns, unsigned int & catcher)
 		{
 			if (ns) ss << "SRegExp::";
 			bool first{true};
@@ -355,7 +355,7 @@ protected:
 			{
 				if (first) first = false;
 				else ss << ',';
-				part->createRegexp(ss,ns);
+				part->createRegexp(ss,ns,catcher);
 			}
 			ss << ">";
 		}
@@ -382,15 +382,15 @@ protected:
 				printf("}");
 			}
 		}
-		virtual void createRegexp(std::stringstream & ss, bool ns)
+		virtual void createRegexp(std::stringstream & ss, bool ns, unsigned int & catcher)
 		{
 			if (ns) ss << "SRegExp::";
 			ss << "Star<";
-			what->createRegexp(ss,ns);
+			what->createRegexp(ss,ns,catcher);
 			if (rest)
 			{
 				ss << ", ";
-				rest->createRegexp(ss,ns);
+				rest->createRegexp(ss,ns,catcher);
 			}
 			ss << ">";
 		}
@@ -417,15 +417,50 @@ protected:
 				printf("}");
 			}
 		}
-		virtual void createRegexp(std::stringstream & ss, bool ns)
+		virtual void createRegexp(std::stringstream & ss, bool ns, unsigned int & catcher)
 		{
 			if (ns) ss << "SRegExp::";
 			ss << "Opt<";
-			what->createRegexp(ss,ns);
+			what->createRegexp(ss,ns,catcher);
 			if (rest)
 			{
 				ss << ", ";
-				rest->createRegexp(ss,ns);
+				rest->createRegexp(ss,ns,catcher);
+			}
+			ss << ">";
+		}
+	};
+	struct Catcher: public Part
+	{
+		virtual ~Catcher() {}
+		virtual const char * type() {return "Catcher";}
+		Part * what;
+		Part * rest{nullptr};
+		Catcher(Part * lwhat): what{lwhat}
+		{
+			
+		}
+		virtual void print()
+		{
+			printf("catch:{");
+			what->print();
+			printf("} ");
+			if (rest)
+			{
+				printf("{");
+				rest->print();
+				printf("}");
+			}
+		}
+		virtual void createRegexp(std::stringstream & ss, bool ns, unsigned int & catcher)
+		{
+			if (ns) ss << "SRegExp::";
+			ss << "DynamicCatch<" << catcher++ << ", ";
+			what->createRegexp(ss,ns,catcher);
+			if (rest)
+			{
+				ss << ", ";
+				rest->createRegexp(ss,ns,catcher);
 			}
 			ss << ">";
 		}
@@ -452,15 +487,15 @@ protected:
 				printf("}");
 			}
 		}
-		virtual void createRegexp(std::stringstream & ss, bool ns)
+		virtual void createRegexp(std::stringstream & ss, bool ns, unsigned int & catcher)
 		{
 			if (ns) ss << "SRegExp::";
 			ss << "Plus<";
-			what->createRegexp(ss,ns);
+			what->createRegexp(ss,ns,catcher);
 			if (rest)
 			{
 				ss << ", ";
-				rest->createRegexp(ss,ns);
+				rest->createRegexp(ss,ns,catcher);
 			}
 			ss << ">";
 		}
@@ -556,6 +591,15 @@ protected:
 			//printf("\n");
 			stack.pop();
 			stack.push(new Optional(last));
+		}
+		void insertCatch()
+		{
+			//printf("insertRepeat:");
+			Part * last = stack.top();
+			//last->print();
+			//printf("\n");
+			stack.pop();
+			stack.push(new Catcher(last));
 		}
 		template <typename T> void insertEndRepeat()
 		{
@@ -716,7 +760,8 @@ protected:
 			std::stringstream ss;
 			if (!stack.empty()) 
 			{
-				stack.top()->createRegexp(ss,ns);
+				unsigned int catcher{1};
+				stack.top()->createRegexp(ss,ns,catcher);
 			}
 			return ss.str();
 		}
@@ -840,12 +885,23 @@ protected:
 				return true;
 			}
 			else if ((!isEOI() && (currentChar == '('))) {
-				
 				readChar();
-				insertStart<SeqStart>("brace");
-				if (!nonterm_s(enabled)) return false;
-				if (!checkToken(')', "<part>")) return false;
-				insertSeq();
+				if (currentChar == '?')
+				{
+					readChar();
+					insertStart<SeqStart>("brace");
+					if (!nonterm_s(enabled)) return false;
+					if (!checkToken(')', "<part>")) return false;
+					insertSeq();
+					insertCatch();
+				}
+				else
+				{
+					insertStart<SeqStart>("brace");
+					if (!nonterm_s(enabled)) return false;
+					if (!checkToken(')', "<part>")) return false;
+					insertSeq();
+				}
 				return true;
 			}
 			else if ((!isEOI() && (currentChar == '['))) {
