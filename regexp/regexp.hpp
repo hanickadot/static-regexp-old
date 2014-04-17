@@ -12,12 +12,6 @@
 namespace SRegExp {
 
 template <char c> struct Chr {
-	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t, size_t) {
-		if (*str == c) {
-			pos++;
-			return true;
-		} else return false;
-	}
 	template <typename BaseType> static inline bool match(const StringAbstraction<BaseType> str, size_t & pos, size_t) {
 		if (str.equal(c)) {
 			pos++;
@@ -31,12 +25,6 @@ template <char c> struct Chr {
 };
 
 template <wchar_t c> struct WChr {
-	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t, size_t) {
-		if (*str == c) {
-			pos++;
-			return true;
-		} else return false;
-	}
 	template <typename BaseType> static inline bool match(const StringAbstraction<BaseType> str, size_t & pos, size_t) {
 		if (str.equal(c)) {
 			pos++;
@@ -50,19 +38,12 @@ template <wchar_t c> struct WChr {
 };
 
 template <char a, char b, char... rest> struct CSet {
-	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t, size_t) {
-		if (matchCharacter(*str)) {
-			pos++;
-			return true;
-		} else return false;
-	}
 	template <typename BaseType> static inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t) {
 		if (matchCharacter(str)) {
 			pos++;
 			return true;
 		} else return false;
 	}
-	template <typename chartype> static inline bool matchCharacter(chartype u) { return (u >= a && u <= b) || CSet<rest...>::matchCharacter(u); }
 	template <typename BaseType> static inline bool matchCharacter(const StringAbstraction<BaseType> & str) {
 		return (str.charIsBetween(a,b)) || CSet<rest...>::matchCharacter(str);
 	}
@@ -73,19 +54,12 @@ template <char a, char b, char... rest> struct CSet {
 };
 
 template <wchar_t a, wchar_t b, wchar_t... rest> struct WSet {
-	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t, size_t) {
-		if (matchCharacter(*str)) {
-			pos++;
-			return true;
-		} else return false;
-	}
 	template <typename BaseType> static inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t) {
 		if (matchCharacter(str)) {
 			pos++;
 			return true;
 		} else return false;
 	}
-	template <typename chartype> static inline bool matchCharacter(chartype u) { return (u >= a && u <= b) || CSet<rest...>::matchCharacter(u); }
 	template <typename BaseType> static inline bool matchCharacter(const StringAbstraction<BaseType> & str) { 
 		return (str.charIsBetween(a,b)) || WSet<rest...>::matchCharacter(str); 
 	}
@@ -96,19 +70,12 @@ template <wchar_t a, wchar_t b, wchar_t... rest> struct WSet {
 };
 
 template <char a, char b> struct CSet<a, b> {
-	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t, size_t) {
-		if (*str >= a && *str <= b) {
-			pos++;
-			return true;
-		} else return false;
-	}
 	template <typename BaseType> static inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t) {
 		if (str.charIsBetween(a,b)) {
 			pos++;
 			return true;
 		} else return false;
 	}
-	template <typename chartype> static inline bool matchCharacter(chartype u) { return (u >= a && u <= b); }
 	template <typename BaseType> static inline bool matchCharacter(const StringAbstraction<BaseType> & str) {
 		return str.charIsBetween(a,b);
 	}
@@ -119,19 +86,12 @@ template <char a, char b> struct CSet<a, b> {
 };
 
 template <wchar_t a, wchar_t b> struct WSet<a, b> {
-	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t, size_t) {
-		if (*str >= a && *str <= b) {
-			pos++;
-			return true;
-		} else return false;
-	}
 	template <typename BaseType> static inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t) {
 		if (str.charIsBetween(a,b)) {
 			pos++;
 			return true;
 		} else return false;
 	}
-	template <typename chartype> static inline bool matchCharacter(chartype u) { return (u >= a && u <= b); }
 	template <typename BaseType> static inline bool matchCharacter(const StringAbstraction<BaseType> & str) {
 		return str.charIsBetween(a,b);
 	}
@@ -142,12 +102,6 @@ template <wchar_t a, wchar_t b> struct WSet<a, b> {
 };
 
 template <char a, char b, char... rest> struct CNegSet {
-	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t, size_t) {
-		if (matchCharacter(*str)) {
-			pos++;
-			return true;
-		} else return false;
-	}
 	template <typename BaseType> static inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t) {
 		if (matchCharacter(str)) {
 			pos++;
@@ -155,7 +109,6 @@ template <char a, char b, char... rest> struct CNegSet {
 		} else return false;
 	}
 	template <typename BaseType> static inline bool matchCharacter(const StringAbstraction<BaseType> & str) { return !(str.charIsBetween(a,b)) && CNegSet<rest...>::matchCharacter(str); }
-	template <typename chartype> static inline bool matchCharacter(chartype u) { return !(u >= a && u <= b) && CNegSet<rest...>::matchCharacter(u); }
 	inline void reset() { }
 	template <unsigned int id> inline bool get(CatchReturn &) {
 		return false;
@@ -163,12 +116,6 @@ template <char a, char b, char... rest> struct CNegSet {
 };
 
 template <wchar_t a, wchar_t b, wchar_t... rest> struct WNegSet {
-	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t, size_t) {
-		if (matchCharacter(*str)) {
-			pos++;
-			return true;
-		} else return false;
-	}
 	template <typename BaseType> static inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t) {
 		if (matchCharacter(str)) {
 			pos++;
@@ -176,7 +123,6 @@ template <wchar_t a, wchar_t b, wchar_t... rest> struct WNegSet {
 		} else return false;
 	}
 	template <typename BaseType> static inline bool matchCharacter(const StringAbstraction<BaseType> & str) { return !(str.charIsBetween(a,b)) && CNegSet<rest...>::matchCharacter(str); }
-	template <typename chartype> static inline bool matchCharacter(chartype u) { return !(u >= a && u <= b) && WNegSet<rest...>::matchCharacter(u); }
 	inline void reset() { }
 	template <unsigned int id> inline bool get(CatchReturn &) {
 		return false;
@@ -184,19 +130,13 @@ template <wchar_t a, wchar_t b, wchar_t... rest> struct WNegSet {
 };
 
 template <char a, char b> struct CNegSet<a, b> {
-	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t, size_t) {
-		if (!(*str >= a && *str <= b)) {
-			pos++;
-			return true;
-		} else return false;
-	}
 	template <typename BaseType> static inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t) {
 		if (!(str.charIsBetween(a,b))) {
 			pos++;
 			return true;
 		} else return false;
 	}
-	template <typename chartype> static inline bool matchCharacter(chartype u) { return !(u >= a && u <= b); }
+	template <typename BaseType> static inline bool matchCharacter(const StringAbstraction<BaseType> & str) { return !(str.charIsBetween(a,b)); }
 	inline void reset() { }
 	template <unsigned int id> inline bool get(CatchReturn &) {
 		return false;
@@ -204,19 +144,13 @@ template <char a, char b> struct CNegSet<a, b> {
 };
 
 template <wchar_t a, wchar_t b> struct WNegSet<a, b> {
-	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t, size_t) {
-		if (!(*str >= a && *str <= b)) {
-			pos++;
-			return true;
-		} else return false;
-	}
 	template <typename BaseType> static inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t) {
 		if (!(str.charIsBetween(a,b))) {
 			pos++;
 			return true;
 		} else return false;
 	}
-	template <typename chartype> static inline bool matchCharacter(chartype u) { return !(u >= a && u <= b); }
+	template <typename BaseType> static inline bool matchCharacter(const StringAbstraction<BaseType> & str) { return !(str.charIsBetween(a,b)); }
 	inline void reset() { }
 	template <unsigned int id> inline bool get(CatchReturn &) {
 		return false;
@@ -226,16 +160,6 @@ template <wchar_t a, wchar_t b> struct WNegSet<a, b> {
 template <typename Inner, typename... rest> struct Seq {
 	Inner exp_inner;
 	Seq<rest...> exp_rest;
-	template <typename chartype> inline bool smatch(const chartype str, size_t & pos, size_t cpos, size_t deep) {
-		size_t tmp{pos};
-		if (exp_inner.smatch(str, tmp, cpos, deep) && exp_rest.smatch(str + tmp - pos, tmp, cpos + tmp - pos, deep)) {
-			pos = tmp;
-			return true;
-		} else {
-			reset();
-			return false;
-		}
-	}
 	template <typename BaseType> inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t deep) {
 		size_t tmp{pos};
 		if (exp_inner.match(str, tmp, deep) && exp_rest.match(str.add(tmp - pos), tmp, deep)) {
@@ -258,14 +182,6 @@ template <typename Inner, typename... rest> struct Seq {
 
 template <typename Inner> struct Seq<Inner> {
 	Inner exp_inner;
-	template <typename chartype> inline bool smatch(const chartype str, size_t & pos, size_t cpos, size_t deep) {
-		if (exp_inner.smatch(str, pos, cpos, deep)) {
-			return true;
-		} else {
-			reset();
-			return false;
-		}
-	}
 	template <typename BaseType> inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t deep) {
 		if (exp_inner.match(str, pos, deep)) {
 			return true;
@@ -283,13 +199,6 @@ template <typename Inner> struct Seq<Inner> {
 };
 
 template <char c, char... rest> struct Str {
-	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t cpos, size_t deep) {
-		size_t tmp{pos};
-		if (Chr<c>::smatch(str, tmp, cpos, deep) && Str<rest...>::smatch(str + 1, tmp, cpos + 1, deep)) {
-			pos = tmp;
-			return true;
-		} else return false;
-	}
 	template <typename BaseType> static inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t deep) {
 		size_t tmp{pos};
 		if (Chr<c>::match(str, tmp, deep) && Str<rest...>::match(str.add(1), tmp, deep)) {
@@ -304,9 +213,6 @@ template <char c, char... rest> struct Str {
 };
 
 template <char c> struct Str<c> {
-	template <typename chartype> static inline bool smatch(const chartype str, size_t & pos, size_t cpos, size_t deep) {
-		return Chr<c>::smatch(str, pos, cpos, deep);
-	}
 	template <typename BaseType> static inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t deep) {
 		return Chr<c>::match(str, pos, deep);
 	}
@@ -319,18 +225,6 @@ template <char c> struct Str<c> {
 template <typename Inner, typename... rest> struct Sel {
 	Inner exp_inner;
 	Sel<rest...> exp_rest;
-	template <typename chartype> inline bool smatch(const chartype str, size_t & pos, size_t cpos, size_t deep) {
-		if (exp_inner.smatch(str, pos, cpos, deep)) return true;
-		else 
-		{
-			if (exp_rest.smatch(str, pos, cpos, deep)) {
-				return true;
-			} else {
-				reset();
-				return false;
-			}
-		}
-	}
 	template <typename BaseType> inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t deep) {
 		if (exp_inner.match(str, pos, deep)) return true;
 		else 
@@ -355,14 +249,6 @@ template <typename Inner, typename... rest> struct Sel {
 
 template <typename Inner> struct Sel<Inner> {
 	Inner exp_inner;
-	template <typename chartype> inline bool smatch(const chartype str, size_t & pos, size_t cpos, size_t deep) {
-		if (exp_inner.smatch(str, pos, cpos, deep)) {
-			return true;
-		} else {
-			reset();
-			return false;
-		}
-	}
 	template <typename BaseType> inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t deep) {
 		if (exp_inner.match(str, pos, deep)) {
 			return true;
@@ -380,12 +266,6 @@ template <typename Inner> struct Sel<Inner> {
 };
 
 struct Any {
-	template <typename chartype> inline bool smatch(const chartype str, size_t & pos, size_t, size_t) {
-		if (*str) {
-			pos++;
-			return true;
-		} else return false;
-	}
 	template <typename BaseType> inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t) {
 		if (str.exists()) {
 			pos++;
@@ -401,25 +281,6 @@ struct Any {
 template <typename Inner, typename... rest> struct Star {
 	Inner exp_inner;
 	Seq<rest...> exp_rest;
-	template <typename chartype> inline bool smatch(const chartype str, size_t & pos, size_t cpos, size_t deep) {
-		size_t tmp{0};
-		if (exp_rest.smatch(str, tmp, cpos, deep)) {
-			pos += tmp;
-			return true;
-		} else if (exp_inner.smatch(str + tmp, tmp, cpos, deep)) {
-			for (;;) if (exp_rest.smatch(str + tmp, tmp, cpos + tmp, deep)) {
-				pos += tmp;
-				return true;
-			} else if (!exp_inner.smatch(str + tmp, tmp, cpos + tmp, deep)) 
-			{
-				reset();
-				return false;
-			}
-		} else {
-			reset();
-			return false;
-		}
-	}
 	template <typename BaseType> inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t deep) {
 		size_t tmp{0};
 		if (exp_rest.match(str, tmp, deep)) {
@@ -451,15 +312,6 @@ template <typename Inner, typename... rest> struct Star {
 
 template <typename Inner> struct Star<Inner> {
 	Inner exp_inner;
-	template <typename chartype> inline bool smatch(const chartype str, size_t & pos, size_t cpos, size_t deep) {
-		size_t tmp{0};
-		if (exp_inner.smatch(str, tmp, cpos, deep)) {
-			for (;;) if (!exp_inner.smatch(str + tmp, tmp, cpos + tmp, deep)) {
-				pos += tmp;
-				return true;
-			}
-		} return true;
-	}
 	template <typename BaseType> inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t deep) {
 		size_t tmp{0};
 		if (exp_inner.match(str, tmp, deep)) {
@@ -480,20 +332,6 @@ template <typename Inner> struct Star<Inner> {
 template <typename Inner, typename... rest> struct Plus {
 	Inner exp_inner;
 	Seq<rest...> exp_rest;
-	template <typename chartype> inline bool smatch(const chartype str, size_t & pos, size_t cpos, size_t deep) {
-		size_t tmp{0};
-		if (exp_inner.smatch(str + tmp, tmp, cpos, deep)) {
-			for (;;) if (exp_rest.smatch(str + tmp, tmp, cpos + tmp, deep)) {
-				pos += tmp;
-				return true;
-			} else if (!exp_inner.smatch(str + tmp, tmp, cpos + tmp, deep)) {
-				reset();
-				return false;
-			}
-		}
-		reset();
-		return false;
-	}
 	template <typename BaseType> inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t deep) {
 		size_t tmp{0};
 		if (exp_inner.match(str.add(tmp), tmp, deep)) {
@@ -520,16 +358,6 @@ template <typename Inner, typename... rest> struct Plus {
 
 template <typename Inner> struct Plus<Inner> {
 	Inner exp_inner;
-	template <typename chartype> inline bool smatch(const chartype str, size_t & pos, size_t cpos, size_t deep) {
-		size_t tmp{0};
-		if (exp_inner.smatch(str + tmp, tmp, cpos, deep))
-			for (;;) if (!exp_inner.smatch(str + tmp, tmp, cpos + tmp, deep)) {
-				pos += tmp;
-				return true;
-			}
-		reset();
-		return false;
-	}
 	template <typename BaseType> inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t deep) {
 		size_t tmp{0};
 		if (exp_inner.match(str.add(tmp), tmp, deep))
@@ -551,17 +379,6 @@ template <typename Inner> struct Plus<Inner> {
 template <typename Inner, typename... rest> struct Opt {
 	Inner exp_inner;
 	Seq<rest...> exp_rest;
-	template <typename chartype> inline bool smatch(const chartype str, size_t & pos, size_t cpos, size_t deep) {
-		size_t tmp{0};
-		if (exp_rest.smatch(str, pos, cpos, deep + 1))
-			return true;
-		else if (exp_inner.smatch(str, tmp, cpos, deep + 1) && exp_rest.smatch(str + tmp, tmp, cpos + tmp, deep + 1)) {
-			pos += tmp;
-			return true;
-		}
-		reset();
-		return false;
-	}
 	template <typename BaseType> inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t deep) {
 		size_t tmp{0};
 		if (exp_rest.match(str, pos, deep + 1))
@@ -584,9 +401,6 @@ template <typename Inner, typename... rest> struct Opt {
 };
 
 struct End {
-	template <typename chartype> inline bool smatch(const chartype * str, size_t &, size_t, size_t) {
-		return (!*str);
-	}
 	template <typename BaseType> inline bool match(const StringAbstraction<BaseType> str, size_t &, size_t) {
 		return str.isEnd();
 	}
@@ -597,9 +411,6 @@ struct End {
 };
 
 struct Begin {
-	template <typename chartype> inline bool smatch(const chartype *, size_t &, size_t cpos, size_t) {
-		return cpos == 0;
-	}
 	template <typename BaseType> inline bool match(const StringAbstraction<BaseType> str, size_t &, size_t) {
 		return str.isBegin();
 	}
@@ -611,15 +422,6 @@ struct Begin {
 
 template <typename... rest> struct Eat {
 	Seq<rest...> exp_inner;
-	template <typename chartype> inline bool smatch(const chartype * str, size_t &, size_t cpos, size_t deep) {
-		size_t tmp{0};
-		while (*(str + tmp)) {
-			if (exp_inner.smatch(str + tmp, tmp, cpos + tmp, deep)) return true;
-			else tmp++;
-		}
-		reset();
-		return false;
-	}
 	template <typename BaseType> inline bool match(StringAbstraction<BaseType> str, size_t &, size_t deep) {
 		size_t tmp{0};
 		while (str.exists(tmp)) {
@@ -636,30 +438,6 @@ template <typename... rest> struct Eat {
 		return exp_inner.template get<id>(catches);
 	}
 };
-
-template <typename... rest> bool sregexp_smatch(const wchar_t * str) {
-	size_t tmp{0};
-	Eat<rest...> definition;
-	return definition.smatch(str, tmp, tmp, 0);
-}
-
-template <typename... rest> bool sregexp_smatch(std::wstring str) {
-	size_t tmp{0};
-	Eat<rest...> definition;
-	return definition.smatch(str.c_str(), tmp, tmp, 0);
-}
-
-template <typename... rest> bool sregexp_smatch(const char * str) {
-	size_t tmp{0};
-	Eat<rest...> definition;
-	return definition.smatch(str, tmp, tmp, 0);
-}
-
-template <typename... rest> bool sregexp_smatch(std::string str) {
-	size_t tmp{0};
-	Eat<rest...> definition;
-	return definition.smatch(str.c_str(), tmp, tmp, 0);
-}
 
 template <typename... rest> class StaticRegExp {
 protected:
@@ -695,6 +473,12 @@ public:
 		return operator()(str);
 	}
 };
+
+template <typename StringType, typename... rest> bool sregexp_smatch(StringType str) {
+	StaticRegExp<rest...> regexp;
+	return regexp(str);
+}
+
 }
 
 #endif
