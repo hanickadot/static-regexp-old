@@ -227,8 +227,7 @@ template <typename Inner, typename... rest> struct Sel {
 	Sel<rest...> exp_rest;
 	template <typename BaseType> inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t deep) {
 		if (exp_inner.match(str, pos, deep)) return true;
-		else 
-		{
+		else {
 			if (exp_rest.match(str, pos, deep)) {
 				return true;
 			} else {
@@ -290,8 +289,7 @@ template <typename Inner, typename... rest> struct Star {
 			for (;;) if (exp_rest.match(str.add(tmp), tmp, deep)) {
 				pos += tmp;
 				return true;
-			} else if (!exp_inner.match(str.add(tmp), tmp, deep)) 
-			{
+			} else if (!exp_inner.match(str.add(tmp), tmp, deep)) {
 				reset();
 				return false;
 			}
@@ -463,8 +461,7 @@ public:
 		CatchReturn ret;
 		if (definition.template get<id>(ret)) {
 			return ret;
-		}
-		else {
+		} else {
 			return {nullptr,0};
 		}
 	}
