@@ -286,12 +286,14 @@ template <typename Inner, typename... rest> struct Star {
 			pos += tmp;
 			return true;
 		} else if (exp_inner.match(str, tmp, deep)) {
-			for (;;) if (exp_rest.match(str.add(tmp), tmp, deep)) {
-				pos += tmp;
-				return true;
-			} else if (!exp_inner.match(str.add(tmp), tmp, deep)) {
-				reset();
-				return false;
+			for (;;) {
+				if (exp_rest.match(str.add(tmp), tmp, deep)) {
+					pos += tmp;
+					return true;
+				} else if (!exp_inner.match(str.add(tmp), tmp, deep)) {
+					reset();
+					return false;
+				}
 			}
 		} else {
 			reset();
@@ -313,9 +315,11 @@ template <typename Inner> struct Star<Inner> {
 	template <typename BaseType> inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t deep) {
 		size_t tmp{0};
 		if (exp_inner.match(str, tmp, deep)) {
-			for (;;) if (!exp_inner.match(str.add(tmp), tmp, deep)) {
-				pos += tmp;
-				return true;
+			for (;;) {
+				if (!exp_inner.match(str.add(tmp), tmp, deep)) {
+					pos += tmp;
+					return true;
+				}
 			}
 		} return true;
 	}
@@ -333,12 +337,14 @@ template <typename Inner, typename... rest> struct Plus {
 	template <typename BaseType> inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t deep) {
 		size_t tmp{0};
 		if (exp_inner.match(str.add(tmp), tmp, deep)) {
-			for (;;) if (exp_rest.match(str.add(tmp), tmp, deep)) {
-				pos += tmp;
-				return true;
-			} else if (!exp_inner.match(str.add(tmp), tmp, deep)) {
-				reset();
-				return false;
+			for (;;) {
+				if (exp_rest.match(str.add(tmp), tmp, deep)) {
+					pos += tmp;
+					return true;
+				} else if (!exp_inner.match(str.add(tmp), tmp, deep)) {
+					reset();
+					return false;
+				}
 			}
 		}
 		reset();
@@ -358,11 +364,14 @@ template <typename Inner> struct Plus<Inner> {
 	Inner exp_inner;
 	template <typename BaseType> inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t deep) {
 		size_t tmp{0};
-		if (exp_inner.match(str.add(tmp), tmp, deep))
-			for (;;) if (!exp_inner.match(str.add(tmp), tmp, deep)) {
-				pos += tmp;
-				return true;
+		if (exp_inner.match(str.add(tmp), tmp, deep)) {
+			for (;;) {
+				if (!exp_inner.match(str.add(tmp), tmp, deep)) {
+					pos += tmp;
+					return true;
+				}
 			}
+		}
 		reset();
 		return false;
 	}
