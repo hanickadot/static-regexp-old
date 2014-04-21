@@ -375,23 +375,15 @@ template <typename Inner, typename... rest> struct GStar {
 };
 
 template <typename Inner> struct GStar<Inner> {
-	Inner exp_inner;
+	Star<Inner> star;
 	template <typename BaseType> inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t deep) {
-		size_t tmp{0};
-		if (exp_inner.match(str, tmp, deep)) {
-			for (;;) {
-				if (!exp_inner.match(str.add(tmp), tmp, deep)) {
-					pos += tmp;
-					return true;
-				}
-			}
-		} return true;
+		return star.match(str,pos,deep);
 	}
 	inline void reset() {
-		exp_inner.reset();
+		star.reset();
 	}
 	template <unsigned int id> inline bool get(CatchReturn & catches) {
-		return exp_inner.template get<id>(catches);
+		return star.template get<id>(catches);
 	}
 };
 
@@ -493,25 +485,15 @@ template <typename Inner, typename... rest> struct GPlus {
 };
 
 template <typename Inner> struct GPlus<Inner> {
-	Inner exp_inner;
+	Plus<Inner> plus;
 	template <typename BaseType> inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t deep) {
-		size_t tmp{0};
-		if (exp_inner.match(str.add(tmp), tmp, deep)) {
-			for (;;) {
-				if (!exp_inner.match(str.add(tmp), tmp, deep)) {
-					pos += tmp;
-					return true;
-				}
-			}
-		}
-		reset();
-		return false;
+		return plus.match(str,pos,deep);
 	}
 	inline void reset() {
-		exp_inner.reset();
+		plus.reset();
 	}
 	template <unsigned int id> inline bool get(CatchReturn & catches) {
-		return exp_inner.template get<id>(catches);
+		return plus.template get<id>(catches);
 	}
 };
 
