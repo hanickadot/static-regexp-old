@@ -9,6 +9,8 @@
 #include "abstraction.hpp"
 #include "catching.hpp"
 
+#define INSERT_HERE Any
+
 namespace SRegExp {
 
 template <char c> struct Chr {
@@ -331,6 +333,68 @@ template <typename Inner> struct Star<Inner> {
 	}
 };
 
+template <typename Inner, typename... rest> struct GStar {
+	Inner exp_inner;
+	Seq<rest...> exp_rest;
+	using Memory = std::pair<Inner,Seq<rest...>>;
+	template <typename BaseType> inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t deep) {
+		size_t tmp{0};
+	
+		auto memory = remember();
+	
+		if (exp_inner.match(str, tmp, deep) && match(str.add(tmp), tmp, deep)) {
+			pos += tmp;
+			return true;
+		}
+		else {
+			if (exp_rest.match(str.add(tmp), tmp, deep)) {
+				pos += tmp;
+				return true;
+			}
+			else {
+				restore(memory);
+				return false;
+			}
+		}
+	}
+	inline Memory remember() {
+		return {exp_inner, exp_rest};
+	}
+	inline void restore(Memory & mem) {
+		exp_inner = std::move(mem.first);
+		exp_rest = std::move(mem.second);
+	}
+	inline void reset() {
+		exp_inner.reset();
+		exp_rest.reset();
+	}
+	template <unsigned int id> inline bool get(CatchReturn & catches) {
+		 if (exp_rest.template get<id>(catches)) return true;
+		 else return exp_inner.template get<id>(catches);
+	}
+};
+
+template <typename Inner> struct GStar<Inner> {
+	Inner exp_inner;
+	template <typename BaseType> inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t deep) {
+		size_t tmp{0};
+		if (exp_inner.match(str, tmp, deep)) {
+			for (;;) {
+				if (!exp_inner.match(str.add(tmp), tmp, deep)) {
+					pos += tmp;
+					return true;
+				}
+			}
+		} return true;
+	}
+	inline void reset() {
+		exp_inner.reset();
+	}
+	template <unsigned int id> inline bool get(CatchReturn & catches) {
+		return exp_inner.template get<id>(catches);
+	}
+};
+
 template <typename Inner, typename... rest> struct Plus {
 	Inner exp_inner;
 	Seq<rest...> exp_rest;
@@ -361,6 +425,74 @@ template <typename Inner, typename... rest> struct Plus {
 };
 
 template <typename Inner> struct Plus<Inner> {
+	Inner exp_inner;
+	template <typename BaseType> inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t deep) {
+		size_t tmp{0};
+		if (exp_inner.match(str.add(tmp), tmp, deep)) {
+			for (;;) {
+				if (!exp_inner.match(str.add(tmp), tmp, deep)) {
+					pos += tmp;
+					return true;
+				}
+			}
+		}
+		reset();
+		return false;
+	}
+	inline void reset() {
+		exp_inner.reset();
+	}
+	template <unsigned int id> inline bool get(CatchReturn & catches) {
+		return exp_inner.template get<id>(catches);
+	}
+};
+
+template <typename Inner, typename... rest> struct GPlus {
+	Inner exp_inner;
+	Seq<rest...> exp_rest;
+	using Memory = std::pair<Inner,Seq<rest...>>;
+	template <typename BaseType, bool first = true> inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t deep) {
+		size_t tmp{0};
+		
+		auto memory = remember();
+		
+		if (exp_inner.match(str, tmp, deep) && match<BaseType,false>(str.add(tmp), tmp, deep)) {
+			pos += tmp;
+			return true;
+		}
+		else if (first) {
+			restore(memory);
+			return false;
+		}
+		else {
+			if (exp_rest.match(str.add(tmp), tmp, deep)) {
+				pos += tmp;
+				return true;
+			}
+			else {
+				restore(memory);
+				return false;
+			}
+		}
+	}
+	inline Memory remember() {
+		return {exp_inner, exp_rest};
+	}
+	inline void restore(Memory & mem) {
+		exp_inner = std::move(mem.first);
+		exp_rest = std::move(mem.second);
+	}
+	inline void reset() {
+		exp_inner.reset();
+		exp_rest.reset();
+	}
+	template <unsigned int id> inline bool get(CatchReturn & catches) {
+		 if (exp_rest.template get<id>(catches)) return true;
+		 else return exp_inner.template get<id>(catches);
+	}
+};
+
+template <typename Inner> struct GPlus<Inner> {
 	Inner exp_inner;
 	template <typename BaseType> inline bool match(StringAbstraction<BaseType> str, size_t & pos, size_t deep) {
 		size_t tmp{0};

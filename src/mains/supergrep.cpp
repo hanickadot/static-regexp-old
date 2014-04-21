@@ -5,8 +5,6 @@
 
 using namespace SRegExp;
 
-#define INSERT_HERE Any
-
 int main (int argc, char ** argv)
 {
 	StaticRegExp< INSERT_HERE > regexp;
