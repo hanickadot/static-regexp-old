@@ -76,7 +76,7 @@ namespace SRegExp2 {
 			len = string.getPosition() - begin;
 			return nright.get().match(string, move, deep, root, right...);
 		}
-		template <typename NearestRight, typename... Right> inline void reset(NearestRight &, Right...)
+		template <typename NearestRight, typename... Right> inline void reset(std::reference_wrapper<NearestRight>, Right...)
 		{
 			
 		}
@@ -519,7 +519,7 @@ namespace SRegExp2 {
 				return nright.get().match(string, move, deep, root, right...);
 				
 			}
-			template <typename NearestRight, typename... Right> inline void reset(NearestRight &, Right...)
+			template <typename NearestRight, typename... Right> inline void reset(std::reference_wrapper<NearestRight>, Right...)
 			{
 			
 			}
@@ -632,7 +632,7 @@ namespace SRegExp2 {
 		{
 			return false;
 		}
-		template <typename NearestRight, typename... Right> inline void reset(NearestRight &, Right...)
+		template <typename NearestRight, typename... Right> inline void reset(std::reference_wrapper<NearestRight>, Right...)
 		{
 			
 		}
