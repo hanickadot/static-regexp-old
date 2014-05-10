@@ -7,9 +7,10 @@ template <typename CharType> struct CharacterAbstraction
 {
 	const size_t cpos;
 	const CharType * str;
-	
-	inline CharacterAbstraction(size_t lcpos, const CharType * lstr): cpos{lcpos}, str{lstr} {}
-	inline CharacterAbstraction(const CharType * lstr): cpos{0}, str{lstr} {}
+	const CharType * original;
+	inline CharacterAbstraction(size_t lcpos, const CharType * lstr, const CharType * lstrorig): cpos{lcpos}, str{lstr}, original{lstrorig} {}
+	inline CharacterAbstraction(size_t lcpos, const CharType * lstr): cpos{lcpos}, str{lstr}, original{lstr} {}
+	inline CharacterAbstraction(const CharType * lstr): cpos{0}, str{lstr}, original{lstr} {}
 	inline bool exists(const size_t pos) const {
 		return *(str+pos);
 	}
@@ -17,12 +18,15 @@ template <typename CharType> struct CharacterAbstraction
 		return *(str);
 	}
 	inline CharacterAbstraction add(size_t c) const {
-		return CharacterAbstraction{cpos+c,str+c};
+		return CharacterAbstraction{cpos+c,str+c,original};
 	}
-	template <typename CharTypeInner> bool equal(const CharTypeInner c) const {
+	template <typename CharTypeInner> inline bool equal(const CharTypeInner c) const {
 		return *str == c;
 	}
-	template <typename CharTypeInner> bool charIsBetween(const CharTypeInner a, const CharTypeInner b) const {
+	inline bool equalToOriginal(const size_t pos, const size_t vec) const {
+		return *(original+pos) == *(str+vec);
+	}
+	template <typename CharTypeInner> inline bool charIsBetween(const CharTypeInner a, const CharTypeInner b) const {
 		return (*str >= a) && (*str <= b);
 	}
 	inline bool isBegin() const {

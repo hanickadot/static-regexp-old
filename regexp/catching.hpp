@@ -13,14 +13,18 @@ protected:
 	Catches * vdata;
 	size_t vsize;
 public:
-	size_t size() {
+	size_t size() const {
 		return vsize;
 	}
-	const Catches * data() {
+	const Catches * data() const {
 		return vdata;
 	}
 	CatchReturn(): vdata{nullptr}, vsize{0} { }
 	CatchReturn(Catches * ldata, size_t lsize): vdata{ldata}, vsize{lsize} { }
+	Catches * get(const size_t id) {
+		if (id < vsize) return &vdata[id];
+		else return nullptr;
+	}
 	Catches * begin() const {
 		return vdata;
 	}
@@ -33,9 +37,9 @@ template <unsigned int id, size_t max, typename Inner> struct StaticCatch {
 	Inner exp_inner;
 	size_t count{0};
 	Catches catches[max];
-	template <typename BaseType> inline bool match(const StringAbstraction<BaseType> str, size_t & pos, size_t deep) {
+	template <typename BaseType, typename AncestorType> inline bool match(const StringAbstraction<BaseType> str, size_t & pos, size_t deep, AncestorType & ancestor) {
 		size_t start{pos};
-		bool ret{exp_inner.match(str,pos,deep)};
+		bool ret{exp_inner.match(str,pos,deep, ancestor)};
 		if (ret) {
 			if (count < max) catches[count++] = {str.getPosition(),pos-start};
 		}
@@ -60,9 +64,9 @@ template <unsigned int id, typename Inner> using OneCatch = StaticCatch<id, 1, I
 template <unsigned int id, typename Inner> struct DynamicCatch {
 	Inner exp_inner;	
 	std::vector<Catches> catches;
-	template <typename BaseType> inline bool match(const StringAbstraction<BaseType> str, size_t & pos, size_t deep) {
+	template <typename BaseType, typename AncestorType> inline bool match(const StringAbstraction<BaseType> str, size_t & pos, size_t deep, AncestorType & ancestor) {
 		size_t start{pos};
-		bool ret{exp_inner.match(str,pos,deep)};
+		bool ret{exp_inner.match(str,pos,deep, ancestor)};
 		if (ret) {
 			catches.push_back({str.getPosition(),pos-start});
 		}
@@ -82,9 +86,20 @@ template <unsigned int id, typename Inner> struct DynamicCatch {
 	}
 };
 
-template <unsigned int id> struct ReCatch {
-	template <typename BaseType> inline bool match(const StringAbstraction<BaseType> str, size_t & pos, size_t deep) {
-		return true;
+template <unsigned int baseid, unsigned int catchid = 0> struct ReCatch {
+	template <typename BaseType, typename AncestorType> inline bool match(const StringAbstraction<BaseType> str, size_t & pos, size_t, AncestorType & ancestor) {
+		CatchReturn ret;
+		if (ancestor.template get<baseid>(ret)) {
+			const Catches * ctch{ret.get(catchid)};
+			if (ctch) {
+				for (size_t l{0}; l != ctch->size; ++l) {
+					if (!str.equalToOriginal(ctch->start+l,l)) return false;
+				}
+				pos += ctch->size;
+				return true;
+			}
+		}
+		return false;
 	}
 	inline void reset() {
 		
