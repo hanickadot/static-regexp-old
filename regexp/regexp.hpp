@@ -594,8 +594,8 @@ public:
 	}
 };
 
-template <typename StringType, typename... rest> bool sregexp_smatch(StringType str) {
-	StaticRegExp<rest...> regexp;
+template <typename StringType, typename... rest> constexpr bool sregexp_smatch(StringType str) {
+	StaticRegExp<rest...> regexp{};
 	return regexp(str);
 }
 

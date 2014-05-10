@@ -8,7 +8,7 @@ TYPE := deploy
 
 include mk/config.mk
 
-APPLICATION_TARGETS := $(wildcard src/benchmark/*.cpp) $(wildcard src/mains/*.cpp)
+APPLICATION_TARGETS := $(wildcard src/benchmark/*.cpp) $(wildcard src/mains/*.cpp) $(wildcard tests/*.test.cpp)
 
 SOURCE_FILES := $(shell find . -name *.cpp | cut -c 3-) 
 IGNORE := 
@@ -21,3 +21,6 @@ include mk/compile.mk
 
 cleanreport:
 	@rm -rf report
+
+test: all
+	@mk/run_all_tests.sh
