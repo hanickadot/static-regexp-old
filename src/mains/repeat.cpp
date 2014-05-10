@@ -1,11 +1,11 @@
-#include "regexp/regexp.hpp"
+#include "regexp/regexp2.hpp"
 #include <cstdio>
 
-using namespace SRegExp;
+using namespace SRegExp2;
 
 int main (int argc, char const *argv[])
 {
-	StaticRegExp< Seq<Begin,OneCatch<1,Plus<CSet<'a','z'>>>,Chr<0x2d>,ReCatch<1>> > regexp;
+	RegularExpression< Begin, OneCatch<1,Plus<CSet<'a','z'>>>, ReCatch<1>, End > regexp;
 	if (argc >= 2)
 	{
 		if (regexp(argv[1]))
