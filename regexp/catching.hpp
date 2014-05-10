@@ -33,15 +33,6 @@ template <unsigned int id, size_t max, typename Inner> struct StaticCatch {
 	Inner exp_inner;
 	size_t count{0};
 	Catches catches[max];
-	template <typename chartype> inline bool smatch(const chartype str, size_t & pos, size_t cpos, size_t deep) {
-		size_t start{pos};
-		bool ret{exp_inner.smatch(str,pos,cpos,deep)};
-		if (ret) {
-			if (count < max) catches[count++] = {cpos,pos-start};
-		}
-		else exp_inner.reset();
-		return ret;
-	}
 	template <typename BaseType> inline bool match(const StringAbstraction<BaseType> str, size_t & pos, size_t deep) {
 		size_t start{pos};
 		bool ret{exp_inner.match(str,pos,deep)};
@@ -69,15 +60,6 @@ template <unsigned int id, typename Inner> using OneCatch = StaticCatch<id, 1, I
 template <unsigned int id, typename Inner> struct DynamicCatch {
 	Inner exp_inner;	
 	std::vector<Catches> catches;
-	template <typename chartype> inline bool smatch(const chartype str, size_t & pos, size_t cpos, size_t deep) {
-		size_t start{pos};
-		bool ret{exp_inner.smatch(str,pos,cpos,deep)};
-		if (ret) {
-			catches.push_back({cpos,pos-start});
-		}
-		else exp_inner.reset();
-		return ret;
-	}
 	template <typename BaseType> inline bool match(const StringAbstraction<BaseType> str, size_t & pos, size_t deep) {
 		size_t start{pos};
 		bool ret{exp_inner.match(str,pos,deep)};
@@ -97,6 +79,18 @@ template <unsigned int id, typename Inner> struct DynamicCatch {
 			return true;
 		}
 		else return exp_inner.template get<lid>(lcatches);
+	}
+};
+
+template <unsigned int id> struct ReCatch {
+	template <typename BaseType> inline bool match(const StringAbstraction<BaseType> str, size_t & pos, size_t deep) {
+		return true;
+	}
+	inline void reset() {
+		
+	}
+	template <unsigned int id> inline bool get(CatchReturn &) {
+		return false;
 	}
 };
 
