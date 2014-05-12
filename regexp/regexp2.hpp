@@ -64,24 +64,17 @@ namespace SRegExp2 {
 	template <unsigned int id, typename... Inner> using DynamicCatch = CatchContent<id, DynamicMemory, Inner...>;
 	template <wchar_t a, wchar_t b, wchar_t... rest> using CSet = CharacterRange<true, a, b, rest...>;
 	template <wchar_t... codes> using Str = String<codes...>;
+	
 	// implementation:
 	
+	// pair representing "catched" content from input
 	struct Catch
 	{
 		size_t begin;
 		size_t len;
-		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, std::reference_wrapper<NearestRight> nright, Right... right)
-		{
-			// checkpoint => set length
-			len = string.getPosition() - begin;
-			return nright.get().match(string, move, deep, root, right...);
-		}
-		template <typename NearestRight, typename... Right> inline void reset(std::reference_wrapper<NearestRight>, Right...)
-		{
-			
-		}
 	};
 	
+	// object which represent all of "catched" pairs, support for range-based FOR
 	struct CatchReturn {
 	protected:
 		Catch * vdata;
@@ -107,6 +100,7 @@ namespace SRegExp2 {
 		}
 	};
 	
+	// static-allocated memory which contains "catched" pairs
 	template <size_t size> struct StaticMemory
 	{
 	protected:
@@ -141,6 +135,7 @@ namespace SRegExp2 {
 		}
 	};
 	
+	// dynamic-allocated memory (based on std::vector) which contains "catched" pairs
 	struct DynamicMemory
 	{
 	protected:
@@ -169,6 +164,8 @@ namespace SRegExp2 {
 		}
 	};
 	
+	// last item in recursively called regexp which always return true for match call
+	// it must be always used as last item of call-chain
 	struct Closure
 	{
 		template <typename StringAbstraction, typename Root, typename... Right> inline bool match(const StringAbstraction, size_t &, unsigned int, Root &, Right...)
@@ -189,6 +186,7 @@ namespace SRegExp2 {
 		}
 	};
 	
+	// struct which represents Begin ^ regexp sign (matching for first-position)
 	struct Begin
 	{
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, std::reference_wrapper<NearestRight> nright, Right... right)
@@ -212,16 +210,15 @@ namespace SRegExp2 {
 		}
 	};
 	
+	// struct which represent End $ regexp sign (matching for end-of-input)
 	struct End
 	{
-		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, std::reference_wrapper<NearestRight> nright, Right... right)
+		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t &, unsigned int, Root &, std::reference_wrapper<NearestRight>, Right...)
 		{
 			if (string.isEnd())
 			{
-				if (nright.get().match(string, move, deep, root, right...))
-				{
-					return true;
-				}
+				// there is no need for calling rest of call-chain
+				return true;
 			}
 			return false;
 		}
@@ -235,6 +232,7 @@ namespace SRegExp2 {
 		}
 	};
 	
+	// templated struct which represent string (sequence of characters) in regexp
 	template <wchar_t firstCode, wchar_t... codes> struct String<firstCode, codes...>
 	{
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, std::reference_wrapper<NearestRight> nright, Right... right)
@@ -285,6 +283,7 @@ namespace SRegExp2 {
 		}
 	};
 	
+	// empty string always match if rest of callchain match
 	template <> struct String<>
 	{
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, std::reference_wrapper<NearestRight> nright, Right... right)
@@ -305,6 +304,7 @@ namespace SRegExp2 {
 		}
 	};
 	
+	// templated struct which represent character range in regexp [a-z] or [a-zX-Y...]
 	template <bool positive, wchar_t a, wchar_t b, wchar_t... rest> struct CharacterRange<positive, a, b, rest...>
 	{
 		static const constexpr bool isEmpty{false};
@@ -349,6 +349,7 @@ namespace SRegExp2 {
 		}
 	};
 	
+	// empty character range which represent ANY character . sign
 	template <bool positive> struct CharacterRange<positive>
 	{
 		static const constexpr bool isEmpty{true};
@@ -392,6 +393,7 @@ namespace SRegExp2 {
 		}
 	};	
 	
+	// templated struct which represents list of chars in regexp [abcdef..] or just one character
 	template <bool positive, wchar_t firstCode, wchar_t... code> struct CharacterClass<positive, firstCode, code...>
 	{
 		static const constexpr bool isEmpty{false};
@@ -436,6 +438,7 @@ namespace SRegExp2 {
 		}
 	};
 	
+	// empty character represents ANY . character
 	template <bool positive> struct CharacterClass<positive>
 	{
 		static const constexpr bool isEmpty{true};
@@ -479,6 +482,7 @@ namespace SRegExp2 {
 		}
 	};
 	
+	// templated struct which represent catch-of-content braces in regexp, ID is unique identify of this content	
 	template <unsigned int id, typename MemoryType, typename Inner, typename... Rest> struct CatchContent<id, MemoryType, Inner, Rest...>
 	{
 		CatchContent<id, Seq<Inner,Rest...>> innerContent;
@@ -496,6 +500,7 @@ namespace SRegExp2 {
 		}
 	};
 	
+	// just one inner regexp variant of catch-of-content
 	template <unsigned int id, typename MemoryType, typename Inner> struct CatchContent<id, MemoryType, Inner>
 	{
 		struct Mark
@@ -558,6 +563,8 @@ namespace SRegExp2 {
 		}
 	};
 	
+	// templated struct which represents string with content from catch (not regexp anymore :) 
+	// in style: ^([a-z]+)\1$ for catching string in style "abcabc" (in catch is just "abc")
 	template <unsigned int baseid, unsigned int catchid> struct ReCatch
 	{
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, std::reference_wrapper<NearestRight> nright, Right... right)
@@ -599,6 +606,7 @@ namespace SRegExp2 {
 		}
 	};
 	
+	// temlated struct which represent selection in regexp (a|b|c)
 	template <typename FirstOption, typename... Options> struct Selection<FirstOption, Options...>
 	{
 		FirstOption first;
@@ -626,6 +634,7 @@ namespace SRegExp2 {
 		}
 	};
 	
+	// empty selection always fail
 	template <> struct Selection<>
 	{
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction, size_t &, unsigned int, Root &, std::reference_wrapper<NearestRight>, Right...)
@@ -642,6 +651,7 @@ namespace SRegExp2 {
 		}
 	};
 	
+	// templated struct which represent sequence of another regexps 
 	template <typename First, typename... Rest> struct Sequence<First, Rest...>
 	{
 		First first;
@@ -665,6 +675,7 @@ namespace SRegExp2 {
 		}
 	};
 
+	// sequence of just one inner regexp
 	template <typename First> struct Sequence<First>
 	{
 		First first;
@@ -687,6 +698,9 @@ namespace SRegExp2 {
 		}
 	};
 	
+	// templated struct which represents generic-loop with min,max limit
+	// ()+ "plus" cycle have min 1 and min 0 (infinity)
+	// ()* "star" cycle have min 0 and max 0 (infinity)
 	template <unsigned int min, unsigned int max, typename Inner, typename... Rest> struct Repeat<min, max, Inner, Rest...>
 	{
 		Repeat<min, max, Seq<Inner,Rest...>> innerRepeat;
@@ -704,6 +718,7 @@ namespace SRegExp2 {
 		}
 	};
 	
+	// cycle with just one inner regexp
 	template <unsigned int min, unsigned int max, typename Inner> struct Repeat<min, max, Inner>
 	{
 		Inner inner;
@@ -757,6 +772,8 @@ namespace SRegExp2 {
 		}
 	};
 	
+	// wrapper for floating matching in string (begin regexp anywhere in string)
+	// without Eat<...> is regexp ABC equivalent to ^ABC$
 	template <typename... Inner> struct Eat
 	{
 		Sequence<Inner...> inner;
@@ -791,6 +808,7 @@ namespace SRegExp2 {
 		}
 	};
 	
+	// templated struct which contains regular expression and is used be user :)
 	template <typename... Definition> struct RegularExpression
 	{
 		Eat<Definition...> eat;
@@ -805,6 +823,18 @@ namespace SRegExp2 {
 			size_t pos{0};
 			Closure closure;
 			return eat.match(StringAbstraction<const char *>(string), pos, 0, eat, std::ref(closure));
+		}
+		bool operator()(std::wstring string)
+		{
+			size_t pos{0};
+			Closure closure;
+			return eat.match(StringAbstraction<const wchar_t *>(string.c_str()), pos, 0, eat, std::ref(closure));
+		}
+		bool operator()(const wchar_t * string)
+		{
+			size_t pos{0};
+			Closure closure;
+			return eat.match(StringAbstraction<const wchar_t *>(string), pos, 0, eat, std::ref(closure));
 		}
 		template <unsigned int id> CatchReturn get()
 		{
