@@ -858,7 +858,7 @@ namespace SRegExp2 {
 			eat.template get<id>(catches);
 			return catches;
 		}
-		template <typename StringType> static constexpr bool smatch(StringType string)
+		template <typename StringType> static bool smatch(StringType string)
 		{
 			RegularExpression<Definition...> regexp{};
 			return regexp(string);

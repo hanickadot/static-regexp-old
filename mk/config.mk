@@ -116,8 +116,8 @@ endif
 
 ifeq ($(CXX_TYPE), clang)
  override CFLAGS += -fPIC 
- override CXXFLAGS +=  -fPIC -std=c++1y -stdlib=libc++
- override DEPFLAGS += -std=c++1y -stdlib=libc++ 
+ override CXXFLAGS +=  -fPIC -std=c++11 -stdlib=libc++
+ override DEPFLAGS += -std=c++11 -stdlib=libc++ 
  ifeq ($(SYSTEM), linux)
   override OPTIMIZE := -O3 $(FLTO)
   override LDOPTIMIZE := -O3 $(FLTO)
