@@ -1,11 +1,11 @@
-#include "regexp/regexp.hpp"
+#include "regexp/regexp2.hpp"
 #include <cstdio>
 
-using namespace SRegExp;
+using namespace SRegExp2;
 
 int main ()
 {
-	StaticRegExp< Seq<Begin,Plus<CSet<'a','z'>>,Str<0x3a,0x2f,0x2f>,CSet<'a','z'>,Plus<CSet<0x30,0x39,'a','z'>, Star<Seq<Chr<0x2e>,CSet<'a','z'>,Plus<CSet<0x30,0x39,'a','z'>>>, Chr<0x2f>>>> > regexp;
+	RegularExpression<Begin, Plus<CSet<'a','z'>>, Str<':','/','/'>, CSet<'a','z'>, Plus<CSet<'a','z','0','9'>>, Star<Chr<'.'>, CSet<'a','z'>, Plus<CSet<'a','z','0','9'>> >, Chr<'/'> > regexp;
 	if (regexp("https://github.com/hanickadot/static-regexp"))
 	{
 		return 0;

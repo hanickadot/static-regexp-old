@@ -1,11 +1,11 @@
-#include "regexp/regexp.hpp"
+#include "regexp/regexp2.hpp"
 #include <cstdio>
 
-using namespace SRegExp;
+using namespace SRegExp2;
 
 bool plus()
 {
-	StaticRegExp< Seq<Begin,Plus<CSet<'a','z'>, Seq<Chr<0x30>,End>>> > regexp;
+	RegularExpression< Begin,Plus<CSet<'a','z'>>,Chr<'0'>,End> regexp;
 	if (!regexp("aa0")) return false;
 	if (!regexp("a0")) return false;
 	if (!regexp("azz0")) return false;
@@ -15,7 +15,7 @@ bool plus()
 
 bool star()
 {
-	StaticRegExp< Seq<Begin,Star<CSet<'a','z'>, Seq<Chr<0x30>,End>>> > regexp;
+	RegularExpression< Begin,Star<CSet<'a','z'>>,Chr<'0'>,End> regexp;
 	if (!regexp("aa0")) return false;
 	if (!regexp("a0")) return false;
 	if (!regexp("azz0")) return false;

@@ -1,13 +1,15 @@
-#include "regexp/regexp.hpp"
+#include "regexp/regexp2.hpp"
 #include <cstdio>
 #include <iostream>
 #include <fstream> 
 
-using namespace SRegExp;
+using namespace SRegExp2;
+
+#define INSERT_HERE Any
 
 int main (int argc, char ** argv)
 {
-	StaticRegExp< INSERT_HERE > regexp;
+	RegularExpression< INSERT_HERE > regexp;
 	
 	if (argc >= 2)
 	{
