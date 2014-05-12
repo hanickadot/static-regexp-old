@@ -179,7 +179,7 @@ After compiled minitest.cpp it will turn into this native code:
 	0e00	popq	%rbp
 	0e01	ret
 	0e02	nopw	%cs:(%rax,%rax)
-	DOMAIN:
+	__CYCLE_FOR_DOMAIN:
 	0e10	pushq	%rbp
 	0e11	movq	%rsp, %rbp
 	0e14	pushq	%r15
