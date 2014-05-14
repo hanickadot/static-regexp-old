@@ -13,15 +13,15 @@ int main (int argc, char const *argv[])
 		{
 			printf("yes:\n");
 			unsigned int id{0};
-			for (auto tmp: regexp.get<0>()) printf("0.%u: '%.*s'\n",id++,(int)tmp.length,argv[1]+tmp.begin);
+			for (auto tmp: regexp.getCatch<0>()) printf("0.%u: '%.*s'\n",id++,(int)tmp.length,argv[1]+tmp.begin);
 			id = 0;
-			for (auto tmp: regexp.get<1>()) printf("1.%u: '%.*s'\n",id++,(int)tmp.length,argv[1]+tmp.begin);
+			for (auto tmp: regexp.getCatch<1>()) printf("1.%u: '%.*s'\n",id++,(int)tmp.length,argv[1]+tmp.begin);
 			id = 0;
-			for (auto tmp: regexp.get<2>()) printf("2.%u: '%.*s'\n",id++,(int)tmp.length,argv[1]+tmp.begin);
+			for (auto tmp: regexp.getCatch<2>()) printf("2.%u: '%.*s'\n",id++,(int)tmp.length,argv[1]+tmp.begin);
 			id = 0;
-			for (auto tmp: regexp.get<3>()) printf("3.%u: '%.*s'\n",id++,(int)tmp.length,argv[1]+tmp.begin);
+			for (auto tmp: regexp.getCatch<3>()) printf("3.%u: '%.*s'\n",id++,(int)tmp.length,argv[1]+tmp.begin);
 			id = 0;
-			for (auto tmp: regexp.get<4>()) printf("4.%u: '%.*s'\n",id++,(int)tmp.length,argv[1]+tmp.begin);
+			for (auto tmp: regexp.getCatch<4>()) printf("4.%u: '%.*s'\n",id++,(int)tmp.length,argv[1]+tmp.begin);
 		}
 		else
 		{

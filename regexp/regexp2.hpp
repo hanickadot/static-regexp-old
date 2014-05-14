@@ -81,8 +81,8 @@ namespace SRegExp2 {
 	// pair representing "catched" content from input
 	struct Catch
 	{
-		size_t begin;
-		size_t length;
+		uint32_t begin;
+		uint32_t length;
 	};
 	
 	// object which represent all of "catched" pairs, support for range-based FOR
@@ -120,7 +120,7 @@ namespace SRegExp2 {
 	template <size_t size> struct StaticMemory
 	{
 	protected:
-		size_t count{0};
+		uint32_t count{0};
 		Catch data[size];
 	public:
 		inline void reset()
@@ -141,7 +141,7 @@ namespace SRegExp2 {
 			}
 			return -1;
 		}
-		size_t getCount()
+		uint32_t getCount()
 		{
 			return count;
 		}
@@ -499,63 +499,63 @@ namespace SRegExp2 {
 	};
 	
 	// templated struct which represent catch-of-content braces in regexp, ID is unique identify of this content	
-	template <unsigned int id, typename MemoryType, typename Inner, typename... Rest> struct CatchContent<id, MemoryType, Inner, Rest...>
+	template <unsigned int id, typename MemoryType, typename Inner, typename... Rest> struct CatchContent<id, MemoryType, Inner, Rest...>: public CatchContent<id, Seq<Inner,Rest...>>
 	{
-		CatchContent<id, Seq<Inner,Rest...>> innerContent;
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
 		{
-			return innerContent.match(string, move, deep, root, nright, right...);
+			return CatchContent<id, Seq<Inner,Rest...>>::match(string, move, deep, root, nright, right...);
 		}
 		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
-			innerContent.reset(nright, right...);
+			CatchContent<id, Seq<Inner,Rest...>>::reset(nright, right...);
 		}
 		template <unsigned int subid> inline bool get(CatchReturn & catches) 
 		{
-			return innerContent.template get<subid>(catches);
+			return CatchContent<id, Seq<Inner,Rest...>>::template get<subid>(catches);
 		}
 	};
 	
 	// just one inner regexp variant of catch-of-content
-	template <unsigned int id, typename MemoryType, typename Inner> struct CatchContent<id, MemoryType, Inner>
+	template <typename MemoryType> struct Mark
 	{
-		struct Mark
-		{
-			size_t begin;
-			size_t len;
-			int addr{-1};
-			MemoryType & memory;
-			template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
-			{
-				// checkpoint => set length
-				len = string.getPosition() - begin;
-				if (addr >= 0)
-				{
-					memory.set(addr,{begin,len});
-				}
-				else
-				{
-					addr = memory.add({begin,len});
-				}
-				return nright.get().match(string, move, deep, root, right...);
-				
-			}
-			template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight>, Right...)
-			{
-			
-			}
-			Mark(size_t lbegin, MemoryType & lmemory): begin{lbegin}, len{0}, memory{lmemory}
-			{
-				
-			}
-		};
+		uint32_t begin;
+		uint32_t len;
+		MemoryType & memory;
+		int addr{-1};
 		
-		Inner inner;
+		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
+		{
+			// checkpoint => set length
+			len = string.getPosition() - begin;
+			if (addr >= 0)
+			{
+				memory.set(addr,{begin,len});
+			}
+			else
+			{
+				addr = memory.add({begin,len});
+			}
+			return nright.get().match(string, move, deep, root, right...);
+			
+		}
+		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight>, Right...)
+		{
+		
+		}
+		Mark(uint32_t lbegin, MemoryType & lmemory): begin{lbegin}, len{0}, memory{lmemory}
+		{
+			
+		}
+	};
+	
+	
+	template <unsigned int id, typename MemoryType, typename Inner> struct CatchContent<id, MemoryType, Inner>: public Inner
+	{
 		MemoryType memory;
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
 		{
-			Mark mark{string.getPosition(), memory};
-			bool ret{inner.match(string, move, deep, root, makeRef(mark), nright, right...)};
+			Mark<MemoryType> mark{static_cast<uint32_t>(string.getPosition()), memory};
+			bool ret{Inner::match(string, move, deep, root, makeRef(mark), nright, right...)};
 			if (!ret)
 			{
 				memory.reset();
@@ -565,7 +565,7 @@ namespace SRegExp2 {
 		}
 		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
-			inner.reset(nright, right...);
+			Inner::reset(nright, right...);
 		}
 		template <unsigned int subid> inline bool get(CatchReturn & catches) 
 		{
@@ -575,7 +575,7 @@ namespace SRegExp2 {
 				catches = memory.getCatches();
 				return true;
 			}
-			else return inner.template get<id>(catches);
+			else return Inner::template get<id>(catches);
 		}
 	};
 	
@@ -623,30 +623,29 @@ namespace SRegExp2 {
 	};
 	
 	// temlated struct which represent selection in regexp (a|b|c)
-	template <typename FirstOption, typename... Options> struct Selection<FirstOption, Options...>
+	template <typename FirstOption, typename... Options> struct Selection<FirstOption, Options...>: public FirstOption
 	{
-		FirstOption first;
-		Selection<Options...> restopt;
+		Selection<Options...> rest;
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
 		{
-			if (first.match(string, move, deep+1, root, nright, right...))
+			if (FirstOption::match(string, move, deep+1, root, nright, right...))
 			{
 				return true;
 			}
 			else
 			{
-				first.reset(nright, right...);
-				return restopt.match(string, move, deep+1, root, nright, right...);
+				FirstOption::reset(nright, right...);
+				return rest.match(string, move, deep+1, root, nright, right...);
 			}
 		}
 		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
-			first.reset(nright, right...);
-			restopt.reset(nright, right...);
+			FirstOption::reset(nright, right...);
+			rest.reset(nright, right...);
 		}
 		template <unsigned int id> inline bool get(CatchReturn & catches) 
 		{
-			return first.template get<id>(catches) || restopt.template get<id>(catches);
+			return FirstOption::template get<id>(catches) || rest.get<id>(catches);
 		}
 	};
 	
@@ -668,76 +667,72 @@ namespace SRegExp2 {
 	};
 	
 	// templated struct which represent sequence of another regexps 
-	template <typename First, typename... Rest> struct Sequence<First, Rest...>
+	template <typename First, typename... Rest> struct Sequence<First, Rest...>: public First
 	{
-		First first;
-		Sequence<Rest...> restseq;
+		Sequence<Rest...> rest;
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
 		{
-			if (first.match(string, move, deep, root, makeRef(restseq), nright, right...))
+			if (First::match(string, move, deep, root, makeRef(rest), nright, right...))
 			{
 				return true;
 			}
-			first.reset(nright, right...);
+			First::reset(nright, right...);
 			return false;
 		}
 		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
-			first.reset(makeRef(restseq), nright, right...);
+			First::reset(makeRef(rest), nright, right...);
 		}
 		template <unsigned int id> inline bool get(CatchReturn & catches) 
 		{
-			return first.template get<id>(catches) || restseq.template get<id>(catches);
+			return First::template get<id>(catches) || rest.template get<id>(catches);
 		}
 	};
 
 	// sequence of just one inner regexp
-	template <typename First> struct Sequence<First>
+	template <typename First> struct Sequence<First>: public First
 	{
-		First first;
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
 		{
-			if (first.match(string, move, deep, root, nright, right...))
+			if (First::match(string, move, deep, root, nright, right...))
 			{
 				return true;
 			}
-			first.reset(nright, right...);
+			First::reset(nright, right...);
 			return false;
 		}
 		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
-			first.reset(nright, right...);
+			First::reset(nright, right...);
 		}
 		template <unsigned int id> inline bool get(CatchReturn & catches) 
 		{
-			return first.template get<id>(catches);
+			return First::template get<id>(catches);
 		}
 	};
 	
 	// templated struct which represents generic-loop with min,max limit
 	// ()+ "plus" cycle have min 1 and min 0 (infinity)
 	// ()* "star" cycle have min 0 and max 0 (infinity)
-	template <unsigned int min, unsigned int max, typename Inner, typename... Rest> struct Repeat<min, max, Inner, Rest...>
+	template <unsigned int min, unsigned int max, typename Inner, typename... Rest> struct Repeat<min, max, Inner, Rest...>: public Repeat<min, max, Seq<Inner,Rest...>>
 	{
-		Repeat<min, max, Seq<Inner,Rest...>> innerRepeat;
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
 		{
-			return innerRepeat.match(string, move, deep, root, nright, right...);
+			return Repeat<min, max, Seq<Inner,Rest...>>::match(string, move, deep, root, nright, right...);
 		}
 		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
-			innerRepeat.reset(nright, right...);
+			Repeat<min, max, Seq<Inner,Rest...>>::reset(nright, right...);
 		}
 		template <unsigned int id> inline bool get(CatchReturn & catches) 
 		{
-			return innerRepeat.template get<id>(catches);
+			return Repeat<min, max, Seq<Inner,Rest...>>::template get<id>(catches);
 		}
 	};
 	
 	// cycle with just one inner regexp
-	template <unsigned int min, unsigned int max, typename Inner> struct Repeat<min, max, Inner>
+	template <unsigned int min, unsigned int max, typename Inner> struct Repeat<min, max, Inner>: public Inner
 	{
-		Inner inner;
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
 		{
 			size_t pos{0};
@@ -757,7 +752,7 @@ namespace SRegExp2 {
 					pos += tmp;
 				}
 				// in next expression "empty" is needed
-				if (inner.match(string.add(pos), tmp, deep+1, root, makeRef(closure)))
+				if (Inner::match(string.add(pos), tmp, deep+1, root, makeRef(closure)))
 				{
 					//copyOfInner = inner;
 					pos += tmp;
@@ -780,24 +775,23 @@ namespace SRegExp2 {
 		}
 		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
-			inner.reset(nright, right...);
+			Inner::reset(nright, right...);
 		}
 		template <unsigned int id> inline bool get(CatchReturn & catches) 
 		{
-			return inner.template get<id>(catches);
+			return Inner::template get<id>(catches);
 		}
 	};
 	
 	// wrapper for floating matching in string (begin regexp anywhere in string)
 	// without Eat<...> is regexp ABC equivalent to ^ABC$
-	template <typename... Inner> struct Eat
+	template <typename... Inner> struct Eat: public Sequence<Inner...>
 	{
-		Sequence<Inner...> inner;
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
 		{
 			size_t pos{0};
 			
-			if (!string.exists() && inner.match(string, move, deep+1, root, nright, right...))
+			if (!string.exists() && Sequence<Inner...>::match(string, move, deep+1, root, nright, right...))
 			{
 				// branch just for empty strings
 				return true;
@@ -805,7 +799,7 @@ namespace SRegExp2 {
 			else while (string.exists(pos)) {
 				size_t imove{0};
 				//DEBUG_PRINTF("eating... (pos = %zu)\n",pos);
-				if (inner.match(string.add(pos), imove, deep+1, root, nright, right...))
+				if (Sequence<Inner...>::match(string.add(pos), imove, deep+1, root, nright, right...))
 				{
 					move += pos + imove;
 					return true;
@@ -816,56 +810,55 @@ namespace SRegExp2 {
 		}
 		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
-			inner.reset(nright, right...);
+			Sequence<Inner...>::reset(nright, right...);
 		}
 		template <unsigned int id> inline bool get(CatchReturn & catches) 
 		{
-			return inner.template get<id>(catches);
+			return Sequence<Inner...>::template get<id>(catches);
 		}
 	};
 	
 	// templated struct which contains regular expression and is used be user :)
-	template <typename... Definition> struct RegularExpression
+	template <typename... Definition> struct RegularExpression: public Eat<Definition...>
 	{
-		Eat<Definition...> eat;
-		bool operator()(std::string string)
+		inline bool operator()(std::string string)
 		{
 			size_t pos{0};
 			Closure closure;
-			return eat.match(StringAbstraction<const char *>(string.c_str()), pos, 0, eat, makeRef(closure));
+			return this->match(StringAbstraction<const char *>(string.c_str()), pos, 0, *this, makeRef(closure));
 		}
-		bool operator()(const char * string)
+		inline bool operator()(const char * string)
 		{
 			size_t pos{0};
 			Closure closure;
-			return eat.match(StringAbstraction<const char *>(string), pos, 0, eat, makeRef(closure));
+			return this->match(StringAbstraction<const char *>(string), pos, 0, *this, makeRef(closure));
 		}
-		bool operator()(std::wstring string)
+		inline bool operator()(std::wstring string)
 		{
 			size_t pos{0};
 			Closure closure;
-			return eat.match(StringAbstraction<const wchar_t *>(string.c_str()), pos, 0, eat, makeRef(closure));
+			return this->match(StringAbstraction<const wchar_t *>(string.c_str()), pos, 0, *this, makeRef(closure));
 		}
-		bool operator()(const wchar_t * string)
+		inline bool operator()(const wchar_t * string)
 		{
 			size_t pos{0};
 			Closure closure;
-			return eat.match(StringAbstraction<const wchar_t *>(string), pos, 0, eat, makeRef(closure));
+			return this->match(StringAbstraction<const wchar_t *>(string), pos, 0, *this, makeRef(closure));
 		}
-		template <unsigned int id> CatchReturn get()
+		template <unsigned int id> inline CatchReturn getCatch()
 		{
 			CatchReturn catches;
-			eat.template get<id>(catches);
+			Eat<Definition...>::template get<id>(catches);
 			return catches;
 		}
-		template <typename StringType> static bool smatch(StringType string)
+		template <typename StringType> inline static bool smatch(StringType string)
 		{
 			RegularExpression<Definition...> regexp{};
 			return regexp(string);
 		}
-		template <unsigned int id, typename StringType> auto part(const StringType string, unsigned int subid = 0) -> decltype(string)
+		template <unsigned int id, typename StringType> inline auto part(const StringType string, unsigned int subid = 0) -> decltype(string)
 		{
-			return string.substr(this->get<id>[subid].begin, this->get<id>[subid].length);
+			return string.substr(this->getCatch<id>[subid].begin, this->getCatch<id>[subid].length);
 		}
 	};
 }
