@@ -33,7 +33,10 @@ will turn into:
 
 	int main (int argc, char const *argv[])
 	{
-		RegularExpression<Begin, Plus<CSet<'a','z'>>, Str<':','/','/'>, CSet<'a','z'>, Plus<CSet<'a','z','0','9'>>, Star<Chr<'.'>, CSet<'a','z'>, Plus<CSet<'a','z','0','9'>> >, Chr<'/'> > regexp;
+		// you can combine sub-regexp into one
+		using Protocol = Plus<CSet<'a','z'>>;
+		using Domain = Seq<CSet<'a','z'>, Plus<CSet<'a','z','0','9'>>>;
+		RegularExpression<Begin, Protocol, Str<':','/','/'>, Domain, Star<Chr<'.'>, Domain >, Chr<'/'> > regexp;
 		if (argc >= 2)
 		{
 			if (regexp(argv[1]))
