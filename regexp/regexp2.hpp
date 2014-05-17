@@ -741,7 +741,7 @@ namespace SRegExp2 {
 			// TODO check if this is necessary
 			//Inner copyOfInner(inner);
 			//NearestRight copyOfNearestRight(nright.get());
-			for (size_t cycle{0}; (!max) || (cycle < max); ++cycle)
+			for (size_t cycle{0}; (!max) || (cycle <= max); ++cycle)
 			{
 				size_t tmp{0};
 				if (nright.get().match(string.add(pos), tmp, deep+1, root, right...) && (cycle >= min))

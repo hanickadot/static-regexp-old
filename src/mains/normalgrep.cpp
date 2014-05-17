@@ -1,15 +1,17 @@
-#include "regexp/regexp2.hpp"
+#include <regex>
 #include <cstdio>
 #include <iostream>
 #include <fstream> 
 
-using namespace SRegExp2;
+//using namespace SRegExp2;
 
 #define INSERT_HERE Any
 
 int main (int argc, char ** argv)
 {
-	RegularExpression< Str<'A','B','C','D'> > regexp;
+	auto regexp = std::regex("ABCD");
+	
+	//RegularExpression< Str<'A','B','C','D'> > regexp;
 	
 	if (argc >= 2)
 	{
@@ -21,7 +23,7 @@ int main (int argc, char ** argv)
 	
 		while (ifs.getline(buffer,1024))
 		{
-			if (regexp(buffer))
+			if (std::regex_search(buffer, regexp))
 			{
 				std::cout << buffer << '\n';
 			}
@@ -33,7 +35,7 @@ int main (int argc, char ** argv)
 	
 		while (getline(std::cin,line))
 		{
-			if (regexp(line))
+			if (std::regex_search(line, regexp))
 			{
 				std::cout << line << '\n';
 			}

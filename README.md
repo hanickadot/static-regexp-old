@@ -1,7 +1,7 @@
 static-regexp
 =============
 
-Static regular expression using c++11 templates.
+Very fast static regular expression using c++11 templates.
 
 Usage
 -----
@@ -18,6 +18,26 @@ Usage
 		std::cout << "matched: " << regexp.part<1>(string) << "\n";
 	}
 	else std::cout << "string not matched!\n";
+ 
+Benchmark
+---------
+
+Static regular expression is __19.5-times__ faster then libc++'s _<regex>_ implementation for simple pattern matching.
+
+	$ time ./build/native/supergrep /tmp/somebigfile.txt > /dev/null
+	
+	real	0m20.654s
+	user	0m18.842s
+	sys	0m1.373s
+	
+While the normal libc++'s _<regexp>_ implementation is significantly slower for same pattern and file:
+	
+	$ time ./build/native/normalgrep /tmp/somebigfile.txt > /dev/null
+	
+	real	6m43.090s
+	user	6m41.235s
+	sys	0m1.544s
+
  
 Example of generated code using clang 3.4
 -----------------------------------------
