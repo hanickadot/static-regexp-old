@@ -1,9 +1,27 @@
 #ifndef __REGEXP__ABSTRACTION__HPP__
 #define __REGEXP__ABSTRACTION__HPP__
 
-template <typename BaseType> struct StringAbstraction;
+namespace SRegExp2 {
 
-template <typename CharType> struct CharacterAbstraction
+template <typename BaseType, typename CharType, bool (*compare)(CharType, CharType, CharType)> struct StringAbstraction;
+
+template <typename CharType> inline bool charactersAreEqual(CharType a, CharType min, CharType max)
+{
+	return a >= min && a <= max;
+}
+
+inline bool caseSensitive(const char a, const char min, const char max)
+{
+	return a >= min && a <= max;
+}
+
+inline bool caseInsensitive(const char a, const char min, const char max)
+{
+	char pom = (a >= 'a' && a <= 'z') ? a - 0x20 : a;	
+	return (pom >= ((min >= 'a' && min <= 'z') ? min - 0x20 : min) && pom <= ((max >= 'a' && max <= 'z') ? max - 0x20 : max)); 
+}
+
+template <typename CharType, bool (*equalFnc)(CharType,CharType,CharType) = charactersAreEqual> struct CharacterAbstraction
 {
 	//const size_t cpos;
 	const CharType * str;
@@ -21,10 +39,10 @@ template <typename CharType> struct CharacterAbstraction
 		return CharacterAbstraction{str+c,original};
 	}
 	template <typename CharTypeInner> inline bool equal(const CharTypeInner c) const {
-		return *str == c;
+		return equalFnc(*str,c,c);
 	}
 	inline bool equalToOriginal(const size_t pos, const size_t vec) const {
-		return *(original+pos) == *(str+vec);
+		return equalFnc(*(original+pos),*(str+vec),*(str+vec));
 	}
 	template <typename CharTypeInner> inline bool charIsBetween(const CharTypeInner a, const CharTypeInner b) const {
 		return (*str >= a) && (*str <= b);
@@ -40,33 +58,35 @@ template <typename CharType> struct CharacterAbstraction
 	}
 };
 
-template <> struct StringAbstraction<const char *>: public CharacterAbstraction<char> {
-	inline StringAbstraction(const CharacterAbstraction && orig): CharacterAbstraction{orig} { }
-	inline StringAbstraction(const char * lstr): CharacterAbstraction{lstr} { }
+template <bool (*compare)(const char, const char, const char)> struct StringAbstraction<const char *, const char, compare>: public CharacterAbstraction<char, compare> {
+	inline StringAbstraction(const CharacterAbstraction<char, compare> && orig): CharacterAbstraction<char, compare>{orig} { }
+	inline StringAbstraction(const char * lstr): CharacterAbstraction<char, compare>{lstr} { }
 	inline StringAbstraction add(size_t c) const {
-		return static_cast<StringAbstraction>(CharacterAbstraction::add(c));
+		return static_cast<StringAbstraction>(CharacterAbstraction<char, compare>::add(c));
 	}
 };
-template <> struct StringAbstraction<char *>: public CharacterAbstraction<char> {
-	inline StringAbstraction(const CharacterAbstraction && orig): CharacterAbstraction{orig} { }
-	inline StringAbstraction(const char * lstr): CharacterAbstraction{lstr} { }
+template <bool (*compare)(const char, const char, const char)> struct StringAbstraction<char *, const char, compare>: public CharacterAbstraction<char, compare> {
+	inline StringAbstraction(const CharacterAbstraction<char, compare> && orig): CharacterAbstraction<char, compare>{orig} { }
+	inline StringAbstraction(const char * lstr): CharacterAbstraction<char, compare>{lstr} { }
 	inline StringAbstraction add(size_t c) const {
-		return static_cast<StringAbstraction>(CharacterAbstraction::add(c));
+		return static_cast<StringAbstraction>(CharacterAbstraction<char, compare>::add(c));
 	}
 };
-template <> struct StringAbstraction<const wchar_t *>: public CharacterAbstraction<wchar_t> {
-	inline StringAbstraction(const CharacterAbstraction && orig): CharacterAbstraction{orig} { }
-	inline StringAbstraction(const wchar_t * lstr): CharacterAbstraction{lstr} { }
+template <bool (*compare)(const wchar_t, const wchar_t, const wchar_t)> struct StringAbstraction<const wchar_t *, const wchar_t, compare>: public CharacterAbstraction<wchar_t, compare> {
+	inline StringAbstraction(const CharacterAbstraction<wchar_t, compare> && orig): CharacterAbstraction<wchar_t, compare>{orig} { }
+	inline StringAbstraction(const wchar_t * lstr): CharacterAbstraction<wchar_t, compare>{lstr} { }
 	inline StringAbstraction add(size_t c) const {
-		return static_cast<StringAbstraction>(CharacterAbstraction::add(c));
+		return static_cast<StringAbstraction>(CharacterAbstraction<wchar_t, compare>::add(c));
 	}
 };
-template <> struct StringAbstraction<wchar_t *>: public CharacterAbstraction<wchar_t> {
-	inline StringAbstraction(const CharacterAbstraction && orig): CharacterAbstraction{orig} { }
-	inline StringAbstraction(const wchar_t * lstr): CharacterAbstraction{lstr} { }
+template <bool (*compare)(const wchar_t, const wchar_t, const wchar_t)> struct StringAbstraction<wchar_t *, const wchar_t, compare>: public CharacterAbstraction<wchar_t, compare> {
+	inline StringAbstraction(const CharacterAbstraction<wchar_t, compare> && orig): CharacterAbstraction<wchar_t, compare>{orig} { }
+	inline StringAbstraction(const wchar_t * lstr): CharacterAbstraction<wchar_t, compare>{lstr} { }
 	inline StringAbstraction add(size_t c) const {
-		return static_cast<StringAbstraction>(CharacterAbstraction::add(c));
+		return static_cast<StringAbstraction>(CharacterAbstraction<wchar_t, compare>::add(c));
 	}
 };
+
+}
 
 #endif

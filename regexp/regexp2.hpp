@@ -22,9 +22,9 @@
 //	while (deep > 0) { printf("  "); deep--; }
 //}
 
-namespace SRegExp2 {
+#include "abstraction.hpp"
 
-	#include "abstraction.hpp"
+namespace SRegExp2 {
 	
 	// available templates for users:
 	struct Begin; // ^
@@ -62,7 +62,7 @@ namespace SRegExp2 {
 	template <unsigned int id, typename... Inner> using OneCatch = CatchContent<id, OneMemory, Inner...>;
 	template <unsigned int id, size_t size, typename... Inner> using StaticCatch = CatchContent<id, StaticMemory<size>, Inner...>;
 	template <unsigned int id, typename... Inner> using DynamicCatch = CatchContent<id, DynamicMemory, Inner...>;
-	template <wchar_t a, wchar_t b, wchar_t... rest> using CSet = CharacterRange<true, a, b, rest...>;
+	template <wchar_t a, wchar_t b, wchar_t... rest> using CRange = CharacterRange<true, a, b, rest...>;
 	template <wchar_t... codes> using Str = String<codes...>;
 	
 	// implementation:
@@ -884,40 +884,51 @@ namespace SRegExp2 {
 	template <typename... Definition> struct RegularExpression
 	{
 		Eat<Definition...> eat;
-		inline bool operator()(std::string string)
+		template <bool (*compare)(const char, const char, const char) = charactersAreEqual<char>> inline bool operator()(std::string string)
 		{
 			size_t pos{0};
 			Closure closure;
-			return eat.match(StringAbstraction<const char *>(string.c_str()), pos, 0, eat, makeRef(closure));
+			return eat.match(StringAbstraction<const char *, const char, compare>(string.c_str()), pos, 0, eat, makeRef(closure));
 		}
-		inline bool operator()(const char * string)
+		template <bool (*compare)(const char, const char, const char) = charactersAreEqual<char>> inline bool operator()(const char * string)
 		{
 			size_t pos{0};
 			Closure closure;
-			return eat.match(StringAbstraction<const char *>(string), pos, 0, eat, makeRef(closure));
+			return eat.match(StringAbstraction<const char *, const char, compare>(string), pos, 0, eat, makeRef(closure));
 		}
-		inline bool operator()(std::wstring string)
+		template <bool (*compare)(const wchar_t, const wchar_t, const wchar_t) = charactersAreEqual<wchar_t>> inline bool operator()(std::wstring string)
 		{
 			size_t pos{0};
 			Closure closure;
-			return eat.match(StringAbstraction<const wchar_t *>(string.c_str()), pos, 0, eat, makeRef(closure));
+			return eat.match(StringAbstraction<const wchar_t *, const wchar_t, compare>(string.c_str()), pos, 0, eat, makeRef(closure));
 		}
-		inline bool operator()(const wchar_t * string)
+		template <bool (*compare)(const wchar_t, const wchar_t, const wchar_t) = charactersAreEqual<wchar_t>> inline bool operator()(const wchar_t * string)
 		{
 			size_t pos{0};
 			Closure closure;
-			return eat.match(StringAbstraction<const wchar_t *>(string), pos, 0, eat, makeRef(closure));
+			return eat.match(StringAbstraction<const wchar_t *, const wchar_t, compare>(string), pos, 0, eat, makeRef(closure));
+		}
+		template <bool (*compare)(const char, const char, const char) = charactersAreEqual<char>> inline bool match(std::string string)
+		{
+			return operator()<compare>(string);
+		}
+		template <bool (*compare)(const char, const char, const char) = charactersAreEqual<char>> inline bool match(const char * string)
+		{
+			return operator()<compare>(string);
+		}
+		template <bool (*compare)(const wchar_t, const wchar_t, const wchar_t) = charactersAreEqual<char>> inline bool match(std::wstring string)
+		{
+			return operator()<compare>(string);
+		}
+		template <bool (*compare)(const wchar_t, const wchar_t, const wchar_t) = charactersAreEqual<char>> inline bool match(const wchar_t * string)
+		{
+			return operator()<compare>(string);
 		}
 		template <unsigned int id> inline CatchReturn getCatch()
 		{
 			CatchReturn catches;
 			eat.template get<id>(catches);
 			return catches;
-		}
-		template <typename StringType> inline static bool smatch(StringType string)
-		{
-			RegularExpression<Definition...> regexp{};
-			return regexp(string);
 		}
 		template <unsigned int id, typename StringType> inline auto part(const StringType string, unsigned int subid = 0) -> decltype(string)
 		{
