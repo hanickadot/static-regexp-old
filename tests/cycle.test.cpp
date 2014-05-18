@@ -5,7 +5,7 @@ using namespace SRegExp2;
 
 bool plus()
 {
-	RegularExpression< Begin,Plus<CSet<'a','z'>>,Chr<'0'>,End> regexp;
+	RegularExpression< Begin,Plus<CRange<'a','z'>>,Chr<'0'>,End> regexp;
 	if (!regexp("aa0")) return false;
 	if (!regexp("a0")) return false;
 	if (!regexp("azz0")) return false;
@@ -15,7 +15,7 @@ bool plus()
 
 bool star()
 {
-	RegularExpression< Begin,Star<CSet<'a','z'>>,Chr<'0'>,End> regexp;
+	RegularExpression< Begin,Star<CRange<'a','z'>>,Chr<'0'>,End> regexp;
 	if (!regexp("aa0")) return false;
 	if (!regexp("a0")) return false;
 	if (!regexp("azz0")) return false;

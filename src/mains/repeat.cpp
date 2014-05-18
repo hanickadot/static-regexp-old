@@ -5,7 +5,7 @@ using namespace SRegExp2;
 
 int main (int argc, char const *argv[])
 {
-	RegularExpression< Begin, OneCatch<1,Plus<CSet<'a','z'>>>, ReCatch<1>, End > regexp;
+	RegularExpression< Begin, OneCatch<1,Plus<CRange<'a','z'>>>, ReCatch<1>, End > regexp;
 	if (argc >= 2)
 	{
 		if (regexp(argv[1]))

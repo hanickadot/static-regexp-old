@@ -5,7 +5,7 @@ using namespace SRegExp2;
 
 int main (int argc, char const *argv[])
 {
-	RegularExpression<Begin, Plus<CSet<'a','z'>>, Str<':','/','/'>, CSet<'a','z'>, Plus<CSet<'a','z','0','9'>>, Star<Chr<'.'>, CSet<'a','z'>, Plus<CSet<'a','z','0','9'>> >, Chr<'/'> > regexp;
+	RegularExpression<Begin, Plus<CRange<'a','z'>>, Str<':','/','/'>, CRange<'a','z'>, Plus<CRange<'a','z','0','9'>>, Star<Chr<'.'>, CRange<'a','z'>, Plus<CRange<'a','z','0','9'>> >, Chr<'/'> > regexp;
 	if (argc >= 2)
 	{
 		if (regexp(argv[1]))
