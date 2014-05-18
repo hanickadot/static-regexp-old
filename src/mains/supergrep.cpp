@@ -9,7 +9,8 @@ using namespace SRegExp2;
 
 int main (int argc, char ** argv)
 {
-	RegularExpression< Str<'A','B','C','D'> > regexp;
+	RegularExpression< Selection<Str<'A','B','C','D','E'>,Str<'D','E','F','G','H'>,Str<'E','F','G','H','I'>,Repeat<4,0,Chr<'A'>>>
+ > regexp;
 	
 	if (argc >= 2)
 	{

@@ -9,7 +9,7 @@
 
 int main (int argc, char ** argv)
 {
-	auto regexp = std::regex("ABCD");
+	auto regexp = std::regex("ABCDE|DEFGH|EFGHI|AAAA+");
 	
 	//RegularExpression< Str<'A','B','C','D'> > regexp;
 	

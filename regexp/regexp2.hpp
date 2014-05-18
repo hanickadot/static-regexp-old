@@ -73,6 +73,72 @@ namespace SRegExp2 {
 		inline T & get() { return target; }
 	};
 	
+	struct CatchReturn;
+	
+	// last item in recursively called regexp which always return true for match call
+	// it must be always used as last item of call-chain
+	struct Closure
+	{
+		template <typename StringAbstraction, typename Root, typename... Right> inline bool match(const StringAbstraction, size_t &, unsigned int, Root &, Right...)
+		{
+			return true;
+		}
+		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight>, Right...)
+		{
+			
+		}
+		inline void reset()
+		{
+			
+		}
+		template <unsigned int id> inline bool get(CatchReturn &) 
+		{
+			return false;
+		}
+	};
+	
+	// Memory for all right context
+	
+	template <typename T> struct CheckMemory
+	{
+		static const constexpr bool have = false;
+	};
+	
+	template <typename... Rest> struct AllRightContext;
+	
+	template <> struct AllRightContext<Reference<Closure>>
+	{
+		AllRightContext(Reference<Closure>) { }
+		void remember(Reference<Closure>) { }
+		void restore(Reference<Closure>) { }
+		static const constexpr bool haveMemory{false};
+	};
+	
+	template <typename T, typename... Rest> struct AllRightContext<Reference<T>, Rest...>
+	{
+		T objCopy;
+		AllRightContext<Rest...> rest;
+		AllRightContext(Reference<T> ref, Rest... irest): objCopy{ref.get()}, rest{irest...} { }
+		void remember(Reference<T> ref, Rest... irest)
+		{
+			if (haveMemory)
+			{
+				objCopy = ref.get();
+				rest.remember(irest...);
+			}
+		}
+		void restore(Reference<T> ref, Rest... irest)
+		{
+			if (haveMemory)
+			{
+				ref.get() = objCopy;
+				rest.restore(irest...);
+			}
+		}	
+		static const constexpr bool haveMemory{CheckMemory<T>::have || AllRightContext<Rest...>::haveMemory};
+	};
+	
+	
 	template <typename T> inline Reference<T> makeRef(T & target)
 	{
 		return Reference<T>(target);
@@ -117,6 +183,9 @@ namespace SRegExp2 {
 	};
 	
 	// static-allocated memory which contains "catched" pairs
+	
+	template <size_t size> struct CheckMemory<StaticMemory<size>> { static const constexpr bool have = true; };
+	
 	template <size_t size> struct StaticMemory
 	{
 	protected:
@@ -152,6 +221,9 @@ namespace SRegExp2 {
 	};
 	
 	// dynamic-allocated memory (based on std::vector) which contains "catched" pairs
+	
+	template <> struct CheckMemory<DynamicMemory> { static const constexpr bool have = true; };
+	
 	struct DynamicMemory
 	{
 	protected:
@@ -177,28 +249,6 @@ namespace SRegExp2 {
 		CatchReturn getCatches()
 		{
 			return CatchReturn{data.data(), getCount()};
-		}
-	};
-	
-	// last item in recursively called regexp which always return true for match call
-	// it must be always used as last item of call-chain
-	struct Closure
-	{
-		template <typename StringAbstraction, typename Root, typename... Right> inline bool match(const StringAbstraction, size_t &, unsigned int, Root &, Right...)
-		{
-			return true;
-		}
-		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight>, Right...)
-		{
-			
-		}
-		inline void reset()
-		{
-			
-		}
-		template <unsigned int id> inline bool get(CatchReturn &) 
-		{
-			return false;
 		}
 	};
 	
@@ -546,6 +596,14 @@ namespace SRegExp2 {
 		{
 			
 		}
+		Mark(const Mark & orig) = default;
+		Mark & operator=(const Mark & orig)
+		{
+			begin = orig.begin;
+			len = orig.len;
+			memory = orig.memory;
+			return *this;
+		}
 	};
 	
 	
@@ -738,31 +796,34 @@ namespace SRegExp2 {
 			size_t pos{0};
 			ssize_t lastFound{-1};
 			Closure closure;
-			// TODO check if this is necessary
-			//Inner copyOfInner(inner);
-			//NearestRight copyOfNearestRight(nright.get());
+			
+			Repeat<min, max, Inner> innerContext{*this};
+			AllRightContext<Reference<NearestRight>, Right...> allRightContext(nright, right...);
+			
+			size_t tmp;
+			
 			for (size_t cycle{0}; (!max) || (cycle <= max); ++cycle)
 			{
-				size_t tmp{0};
-				if (nright.get().match(string.add(pos), tmp, deep+1, root, right...) && (cycle >= min))
+				if (nright.get().match(string.add(pos), tmp = 0, deep+1, root, right...) && (cycle >= min))
 				{
-					//copyOfNearestRight = nright.get();
+					allRightContext.remember(nright, right...);
+					nright.get().reset(right...);
 					lastFound = pos + tmp;
 					DEBUG_PRINTF(">> found at %zu\n",lastFound);
-					pos += tmp;
 				}
 				// in next expression "empty" is needed
-				if (Inner::match(string.add(pos), tmp, deep+1, root, makeRef(closure)))
+				*this = innerContext;
+				if (Inner::match(string.add(pos), tmp = 0, deep+1, root, makeRef(closure)))
 				{
-					//copyOfInner = inner;
+					innerContext = *this;
 					pos += tmp;
 				}
 				else 
 				{
 					if (lastFound >= 0)
 					{
-						//inner = copyOfInner;
-						//nright = copyOfNearestRight;
+						*this = innerContext;
+						allRightContext.restore(nright, right...);
 						DEBUG_PRINTF("cycle done (cycle = %zu)\n",cycle);
 						move += static_cast<size_t>(lastFound);
 						return true;
@@ -771,6 +832,7 @@ namespace SRegExp2 {
 				}
 				
 			}
+			reset(nright, right...);
 			return false;
 		}
 		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
@@ -819,36 +881,37 @@ namespace SRegExp2 {
 	};
 	
 	// templated struct which contains regular expression and is used be user :)
-	template <typename... Definition> struct RegularExpression: public Eat<Definition...>
+	template <typename... Definition> struct RegularExpression
 	{
+		Eat<Definition...> eat;
 		inline bool operator()(std::string string)
 		{
 			size_t pos{0};
 			Closure closure;
-			return this->match(StringAbstraction<const char *>(string.c_str()), pos, 0, *this, makeRef(closure));
+			return eat.match(StringAbstraction<const char *>(string.c_str()), pos, 0, eat, makeRef(closure));
 		}
 		inline bool operator()(const char * string)
 		{
 			size_t pos{0};
 			Closure closure;
-			return this->match(StringAbstraction<const char *>(string), pos, 0, *this, makeRef(closure));
+			return eat.match(StringAbstraction<const char *>(string), pos, 0, eat, makeRef(closure));
 		}
 		inline bool operator()(std::wstring string)
 		{
 			size_t pos{0};
 			Closure closure;
-			return this->match(StringAbstraction<const wchar_t *>(string.c_str()), pos, 0, *this, makeRef(closure));
+			return eat.match(StringAbstraction<const wchar_t *>(string.c_str()), pos, 0, eat, makeRef(closure));
 		}
 		inline bool operator()(const wchar_t * string)
 		{
 			size_t pos{0};
 			Closure closure;
-			return this->match(StringAbstraction<const wchar_t *>(string), pos, 0, *this, makeRef(closure));
+			return eat.match(StringAbstraction<const wchar_t *>(string), pos, 0, eat, makeRef(closure));
 		}
 		template <unsigned int id> inline CatchReturn getCatch()
 		{
 			CatchReturn catches;
-			Eat<Definition...>::template get<id>(catches);
+			eat.template get<id>(catches);
 			return catches;
 		}
 		template <typename StringType> inline static bool smatch(StringType string)
