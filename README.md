@@ -22,7 +22,7 @@ Usage
 Benchmark
 ---------
 
-Static regular expression is __19.5-times__ faster then libc++'s _<regex>_ implementation for __simple pattern__ matching (`ABCD`).
+Simple pattern using static regular expression (`ABCD`) is quick:
 
 	Str<'A','B','C','D'>
 
@@ -32,13 +32,32 @@ Static regular expression is __19.5-times__ faster then libc++'s _<regex>_ imple
 	user	0m18.842s
 	sys	0m1.373s
 
-While the normal libc++'s _<regexp>_ implementation is significantly slower for same pattern and file:
+While the normal libc++'s _<regexp>_ implementation is __19.5-times__ slower:
 
 	$ time ./build/native/normalgrep /tmp/somebigfile.txt > /dev/null
 	
 	real	6m43.090s
 	user	6m41.235s
 	sys	0m1.544s
+
+And BSD egrep is __3-times__ slower:
+
+	$ time egrep "ABCD" /tmp/somebigfile.txt > /dev/null
+	
+	real	1m1.935s
+	user	1m0.897s
+	sys	0m0.784s
+
+And for compare simple BSD fgrep is at same speed as egrep:
+
+	$ time fgrep "ABCD" /tmp/somebigfile.txt > /dev/null
+	
+	real	1m1.370s
+	user	1m0.410s
+	sys	0m0.759s
+
+More complex benchmark
+----------------------
 
 For __more complex pattern__ (`ABCDE|DEFGH|EFGHI|AAAA+`) static regular expression maintain same speed:
 
@@ -48,11 +67,17 @@ For __more complex pattern__ (`ABCDE|DEFGH|EFGHI|AAAA+`) static regular expressi
 	user	0m20.579s
 	sys	0m1.064s
 
-And libc++'s _<regexp>_ is __3650-times__ slower!
+And libc++'s _<regexp>_ is __3650-times__ slower:
 
 	real	63m18.043s
 	user	63m9.890s
 	sys	0m4.731s
+
+And BSD egrep is __10.6-times__ slower:
+
+	real	3m39.765s
+	user	3m37.909s
+	sys	0m1.129s
  
 Example of generated code using clang 3.4
 -----------------------------------------
