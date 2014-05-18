@@ -11,7 +11,7 @@ Usage
 	using namespace SRegExp2;
 	
 	// Equivalent to ^([a-z]+)
-	RegularExpression<Begin, OneCatch<1, Plus<CSet<'a','z'>> > > regexp;
+	RegularExpression<Begin, OneCatch<1, Plus<CRange<'a','z'>> > > regexp;
 	
 	if (regexp.match(string))
 	{
@@ -94,8 +94,8 @@ will turn into:
 	int main (int argc, char const *argv[])
 	{
 		// you can combine sub-regexp into one
-		using Protocol = Plus<CSet<'a','z'>>;
-		using Domain = Seq<CSet<'a','z'>, Plus<CSet<'a','z','0','9'>>>;
+		using Protocol = Plus<CRange<'a','z'>>;
+		using Domain = Seq<CRange<'a','z'>, Plus<CRange<'a','z','0','9'>>>;
 		RegularExpression<Begin, Protocol, Str<':','/','/'>, Domain, Star<Chr<'.'>, Domain >, Chr<'/'> > regexp;
 		if (argc >= 2)
 		{

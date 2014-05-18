@@ -916,11 +916,11 @@ namespace SRegExp2 {
 		{
 			return operator()<compare>(string);
 		}
-		template <bool (*compare)(const wchar_t, const wchar_t, const wchar_t) = charactersAreEqual<char>> inline bool match(std::wstring string)
+		template <bool (*compare)(const wchar_t, const wchar_t, const wchar_t) = charactersAreEqual<wchar_t>> inline bool match(std::wstring string)
 		{
 			return operator()<compare>(string);
 		}
-		template <bool (*compare)(const wchar_t, const wchar_t, const wchar_t) = charactersAreEqual<char>> inline bool match(const wchar_t * string)
+		template <bool (*compare)(const wchar_t, const wchar_t, const wchar_t) = charactersAreEqual<wchar_t>> inline bool match(const wchar_t * string)
 		{
 			return operator()<compare>(string);
 		}
