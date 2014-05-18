@@ -22,7 +22,7 @@ Usage
 Benchmark
 ---------
 
-Static regular expression is __19.5-times__ faster then libc++'s _<regex>_ implementation for __simple pattern__ matching (ABCD).
+Static regular expression is __19.5-times__ faster then libc++'s _<regex>_ implementation for __simple pattern__ matching (`ABCD`).
 
 	Str<'A','B','C','D'>
 
@@ -40,7 +40,7 @@ While the normal libc++'s _<regexp>_ implementation is significantly slower for 
 	user	6m41.235s
 	sys	0m1.544s
 
-For __more complex pattern__ (ABCDE|DEFGH|EFGHI|AAAA+) static regular expression maintain same speed:
+For __more complex pattern__ (`ABCDE|DEFGH|EFGHI|AAAA+`) static regular expression maintain same speed:
 
 	Selection<Str<'A','B','C','D','E'>,Str<'D','E','F','G','H'>,Str<'E','F','G','H','I'>,Repeat<4,0,Chr<'A'>>>
 
