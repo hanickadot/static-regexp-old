@@ -65,6 +65,8 @@ namespace SRegExp2 {
 	template <wchar_t a, wchar_t b, wchar_t... rest> using CRange = CharacterRange<true, a, b, rest...>;
 	template <wchar_t... codes> using Str = String<codes...>;
 	
+	template <typename CharType> using CompareFnc = bool (*)(const CharType, const CharType, const CharType);
+	
 	// implementation:
 	template <typename T> struct Reference
 	{
@@ -884,43 +886,43 @@ namespace SRegExp2 {
 	template <typename... Definition> struct RegularExpression
 	{
 		Eat<Definition...> eat;
-		template <bool (*compare)(const char, const char, const char) = charactersAreEqual<char>> inline bool operator()(std::string string)
+		template <CompareFnc<char> compare = charactersAreEqual<char>> inline bool operator()(std::string string)
 		{
 			size_t pos{0};
 			Closure closure;
 			return eat.match(StringAbstraction<const char *, const char, compare>(string.c_str()), pos, 0, eat, makeRef(closure));
 		}
-		template <bool (*compare)(const char, const char, const char) = charactersAreEqual<char>> inline bool operator()(const char * string)
+		template <CompareFnc<char> compare = charactersAreEqual<char>> inline bool operator()(const char * string)
 		{
 			size_t pos{0};
 			Closure closure;
 			return eat.match(StringAbstraction<const char *, const char, compare>(string), pos, 0, eat, makeRef(closure));
 		}
-		template <bool (*compare)(const wchar_t, const wchar_t, const wchar_t) = charactersAreEqual<wchar_t>> inline bool operator()(std::wstring string)
+		template <CompareFnc<wchar_t> compare = charactersAreEqual<wchar_t>> inline bool operator()(std::wstring string)
 		{
 			size_t pos{0};
 			Closure closure;
 			return eat.match(StringAbstraction<const wchar_t *, const wchar_t, compare>(string.c_str()), pos, 0, eat, makeRef(closure));
 		}
-		template <bool (*compare)(const wchar_t, const wchar_t, const wchar_t) = charactersAreEqual<wchar_t>> inline bool operator()(const wchar_t * string)
+		template <CompareFnc<wchar_t> compare =  charactersAreEqual<wchar_t>> inline bool operator()(const wchar_t * string)
 		{
 			size_t pos{0};
 			Closure closure;
 			return eat.match(StringAbstraction<const wchar_t *, const wchar_t, compare>(string), pos, 0, eat, makeRef(closure));
 		}
-		template <bool (*compare)(const char, const char, const char) = charactersAreEqual<char>> inline bool match(std::string string)
+		template <CompareFnc<char> compare = charactersAreEqual<char>> inline bool match(std::string string)
 		{
 			return operator()<compare>(string);
 		}
-		template <bool (*compare)(const char, const char, const char) = charactersAreEqual<char>> inline bool match(const char * string)
+		template <CompareFnc<char> compare = charactersAreEqual<char>> inline bool match(const char * string)
 		{
 			return operator()<compare>(string);
 		}
-		template <bool (*compare)(const wchar_t, const wchar_t, const wchar_t) = charactersAreEqual<wchar_t>> inline bool match(std::wstring string)
+		template <CompareFnc<wchar_t> compare = charactersAreEqual<wchar_t>> inline bool match(std::wstring string)
 		{
 			return operator()<compare>(string);
 		}
-		template <bool (*compare)(const wchar_t, const wchar_t, const wchar_t) = charactersAreEqual<wchar_t>> inline bool match(const wchar_t * string)
+		template <CompareFnc<wchar_t> compare = charactersAreEqual<wchar_t>> inline bool match(const wchar_t * string)
 		{
 			return operator()<compare>(string);
 		}
