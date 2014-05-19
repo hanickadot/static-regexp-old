@@ -934,7 +934,7 @@ namespace SRegExp2 {
 		}
 		template <unsigned int id, typename StringType> inline auto part(const StringType string, unsigned int subid = 0) -> decltype(string)
 		{
-			return string.substr(this->getCatch<id>[subid].begin, this->getCatch<id>[subid].length);
+			return string.substr(this->getCatch<id>()[subid].begin, this->getCatch<id>()[subid].length);
 		}
 	};
 }
