@@ -42,6 +42,7 @@ namespace SRegExp2 {
 	template <typename... Inner> using Optional = Selection<Sequence<Inner...>,Empty>; // a?
 	template <unsigned int id, typename MemoryType, typename... Inner> struct CatchContent; // catching content of (...)
 	template <unsigned int baseid, unsigned int catchid = 0> struct ReCatch; // ([a-z]) \1
+	template <unsigned int baseid, unsigned int catchid = 0> struct ReCatchReverse; // ([a-z]) \1
 	template <typename... Definition> struct RegularExpression; 
 	
 	// MemoryTypes for CatchContent
@@ -642,6 +643,47 @@ namespace SRegExp2 {
 	// templated struct which represents string with content from catch (not regexp anymore :) 
 	// in style: ^([a-z]+)\1$ for catching string in style "abcabc" (in catch is just "abc")
 	template <unsigned int baseid, unsigned int catchid> struct ReCatch
+	{
+		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
+		{
+			CatchReturn ret;
+			if (root.template get<baseid>(ret)) {
+				//printf("catch found (size = %zu)\n",ret.size());
+				const Catch * ctch{ret.get(catchid)};
+				if (ctch) {
+					//printf("subcatch found\n");
+					for (size_t l{0}; l != ctch->length; ++l) {
+						if (!string.equalToOriginal(ctch->begin+(ctch->length-l-1),l)) return false;
+					}
+					size_t tmp{0};
+					if (nright.get().match(string.add(ctch->length), tmp, deep, root, right...))
+					{
+						move += ctch->length + tmp;
+						return true;
+					}
+					else
+					{
+						reset(nright, right...);
+					}
+				}
+				else
+				{
+					//printf("subcatch NOT found %u\n",catchid);
+				}
+			}
+			return false;
+		}
+		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
+		{
+			nright.get().reset(right...);
+		}
+		template <unsigned int subid> inline bool get(CatchReturn &) 
+		{
+			return false;
+		}
+	};
+	
+	template <unsigned int baseid, unsigned int catchid> struct ReCatchReverse
 	{
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
 		{
