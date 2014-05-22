@@ -19,14 +19,14 @@ int main (int argc, char const *argv[])
 	
 	HTTPCatch regexp;
 	
-	printf("sizeof(HTTPCatch) = %zu\n",sizeof(HTTPCatch));
-	printf("sizeof(Begin) = %zu\n",sizeof(Begin));
-	printf("sizeof(Sequence<Begin,End>) = %zu\n",sizeof(Sequence<Begin,End>));
-	printf("sizeof(Protocol) = %zu\n",sizeof(Protocol));
-	printf("sizeof(Plus<CRange<'a','z'>>) = %zu\n",sizeof(Plus<CRange<'a','z'>>));
-	printf("sizeof(NextDomains) = %zu\n",sizeof(NextDomains));
-	printf("sizeof(Str<0x3a,0x2f,0x2f>) = %zu\n",sizeof(Str<0x3a,0x2f,0x2f>));
-	printf("sizeof(Domain) = %zu\n",sizeof(Domain));
+	//printf("sizeof(HTTPCatch) = %zu\n",sizeof(HTTPCatch));
+	//printf("sizeof(Begin) = %zu\n",sizeof(Begin));
+	//printf("sizeof(Sequence<Begin,End>) = %zu\n",sizeof(Sequence<Begin,End>));
+	//printf("sizeof(Protocol) = %zu\n",sizeof(Protocol));
+	//printf("sizeof(Plus<CRange<'a','z'>>) = %zu\n",sizeof(Plus<CRange<'a','z'>>));
+	//printf("sizeof(NextDomains) = %zu\n",sizeof(NextDomains));
+	//printf("sizeof(Str<0x3a,0x2f,0x2f>) = %zu\n",sizeof(Str<0x3a,0x2f,0x2f>));
+	//printf("sizeof(Domain) = %zu\n",sizeof(Domain));
 	if (argc >= 2)
 	{
 		if (regexp(argv[1]))

@@ -17,6 +17,8 @@
 #define DEBUG_PRINT(text)
 #endif
 
+#pragma GCC diagnostic ignored "-Wtype-limits"
+
 //void printTab(unsigned int deep)
 //{
 //	while (deep > 0) { printf("  "); deep--; }
@@ -72,7 +74,7 @@ namespace SRegExp2 {
 	template <typename T> struct Reference
 	{
 		T & target;
-		inline Reference(T & ltarget): target{ltarget} { }
+		inline Reference(T & ltarget): target(ltarget) { }
 		inline T & get() { return target; }
 	};
 	
@@ -595,7 +597,7 @@ namespace SRegExp2 {
 		{
 		
 		}
-		Mark(uint32_t lbegin, MemoryType & lmemory): begin{lbegin}, len{0}, memory{lmemory}
+		Mark(uint32_t lbegin, MemoryType & lmemory): begin{lbegin}, len{0}, memory(lmemory)
 		{
 			
 		}
@@ -846,7 +848,7 @@ namespace SRegExp2 {
 			
 			size_t tmp;
 			
-			for (size_t cycle{0}; (!max) || (cycle <= max); ++cycle)
+			for (unsigned int cycle{0}; (!max) || (cycle <= max); ++cycle)
 			{
 				if (nright.get().match(string.add(pos), tmp = 0, deep+1, root, right...) && (cycle >= min))
 				{

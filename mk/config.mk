@@ -102,17 +102,17 @@ else ifeq ($(SYSTEM), darwin)
  override SONAME := -Wl,-install_name,
 endif
 
-#ifeq ($(CXX_TYPE), gcc)
-# override DEPFLAGS += -std=c++11
-# override CXXFLAGS += -std=c++11 -fPIC
-# override LDFLAGS += -ldl -lpthread 
-#endif
+ifeq ($(CXX_TYPE), gcc)
+ override DEPFLAGS += -std=c++11 -Wno-error=type-limits
+ override CXXFLAGS += -std=c++11 -fPIC -Wno-error=type-limits
+ override LDFLAGS += -ldl -lpthread 
+endif
 
-#ifeq ($(CXX_TYPE), icc)
-# override DEPFLAGS += -std=c++11 -stdlib=libc++ 
-# override CXXFLAGS += -std=c++11 -fPIC -stdlib=libc++ -axSSE4.1
-# override LDFLAGS += -ldl -lpthread -lc++
-#endif
+ifeq ($(CXX_TYPE), icc)
+ override DEPFLAGS += -std=c++11 -stdlib=libc++ 
+ override CXXFLAGS += -std=c++11 -fPIC -stdlib=libc++ -axSSE4.1
+ override LDFLAGS += -ldl -lpthread -lc++
+endif
 
 ifeq ($(CXX_TYPE), clang)
  override CFLAGS += -fPIC 
