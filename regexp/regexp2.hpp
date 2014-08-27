@@ -70,6 +70,7 @@ namespace SRegExp2 {
 	template <wchar_t... codes> using Str = String<codes...>;
 	using Space = Chr<' '>;
 	using WhiteSpace = Set<' ','\t','\r','\n'>;
+	using Number = CRange<'0','9'>;
 	
 	template <typename CharType> using CompareFnc = bool (*)(const CharType, const CharType, const CharType);
 	
@@ -936,12 +937,12 @@ namespace SRegExp2 {
 		{
 			if (Sequence<Inner...>::match(string, move, deep, root, nright, right...))
 			{
-				std::cout << "[part "<<part<<": match; move="<<move<<"; right="<<sizeof...(Right)<<"]\n";
+				std::cout << "[part "<<part<<": match; pos="<<string.getPosition()<<"; move="<<move<<"; right="<<sizeof...(Right)<<"]\n";
 				return true;
 			}
 			else
 			{
-				std::cout << "[part "<<part<<": no match; move="<<move<<"; right="<<sizeof...(Right)<<"]\n";
+				std::cout << "[part "<<part<<": no match; pos="<<string.getPosition()<<"; move="<<move<<"; right="<<sizeof...(Right)<<"]\n";
 				return false;
 			}
 		}
