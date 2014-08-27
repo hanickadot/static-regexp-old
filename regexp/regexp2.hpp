@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstdio>
 #include <functional>
+#include <iostream>
 
 //#define DEBUG	
 	
@@ -77,7 +78,7 @@ namespace SRegExp2 {
 	{
 		T & target;
 		inline Reference(T & ltarget): target(ltarget) { }
-		inline T & get() { return target; }
+		inline T & getRef() { return target; }
 	};
 	
 	struct CatchReturn;
@@ -125,12 +126,12 @@ namespace SRegExp2 {
 	{
 		T objCopy;
 		AllRightContext<Rest...> rest;
-		AllRightContext(Reference<T> ref, Rest... irest): objCopy{ref.get()}, rest{irest...} { }
+		AllRightContext(Reference<T> ref, Rest... irest): objCopy{ref.getRef()}, rest{irest...} { }
 		void remember(Reference<T> ref, Rest... irest)
 		{
 			if (haveMemory)
 			{
-				objCopy = ref.get();
+				objCopy = ref.getRef();
 				rest.remember(irest...);
 			}
 		}
@@ -138,7 +139,7 @@ namespace SRegExp2 {
 		{
 			if (haveMemory)
 			{
-				ref.get() = objCopy;
+				ref.getRef() = objCopy;
 				rest.restore(irest...);
 			}
 		}	
@@ -266,7 +267,7 @@ namespace SRegExp2 {
 		{
 			if (string.isBegin())
 			{
-				if (nright.get().match(string, move, deep, root, right...))
+				if (nright.getRef().match(string, move, deep, root, right...))
 				{
 					return true;
 				}
@@ -275,7 +276,7 @@ namespace SRegExp2 {
 		}
 		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
-			nright.get().reset(right...);
+			nright.getRef().reset(right...);
 		}
 		template <unsigned int id> inline bool get(CatchReturn &) 
 		{
@@ -297,7 +298,7 @@ namespace SRegExp2 {
 		}
 		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
-			nright.get().reset(right...);
+			nright.getRef().reset(right...);
 		}
 		template <unsigned int id> inline bool get(CatchReturn &) 
 		{
@@ -315,7 +316,7 @@ namespace SRegExp2 {
 			{
 				DEBUG_PRINTF("checkString match (pos = %zu)\n",pos);
 				size_t pos2{0};
-				if (nright.get().match(string.add(pos), pos2, deep, root, right...))
+				if (nright.getRef().match(string.add(pos), pos2, deep, root, right...))
 				{
 					move = pos+pos2;
 					return true;
@@ -348,7 +349,7 @@ namespace SRegExp2 {
 		}
 		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
-			nright.get().reset(right...);
+			nright.getRef().reset(right...);
 		}
 		template <unsigned int id> inline bool get(CatchReturn &) 
 		{
@@ -361,7 +362,7 @@ namespace SRegExp2 {
 	{
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
 		{
-			return nright.get().match(string, move, deep, root, right...);
+			return nright.getRef().match(string, move, deep, root, right...);
 		}
 		template <typename StringAbstraction> static inline bool checkString(const StringAbstraction, size_t &, unsigned int)
 		{
@@ -369,7 +370,7 @@ namespace SRegExp2 {
 		}
 		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
-			nright.get().reset(right...);
+			nright.getRef().reset(right...);
 		}
 		template <unsigned int id> inline bool get(CatchReturn &) 
 		{
@@ -386,7 +387,7 @@ namespace SRegExp2 {
 			if ((positive && checkChar(string, deep)) || (!positive && !checkChar(string, deep)))
 			{
 				size_t pos{0};
-				if (nright.get().match(string.add(1), pos, deep, root, right...))
+				if (nright.getRef().match(string.add(1), pos, deep, root, right...))
 				{
 					move = pos+1;
 					return true;
@@ -414,7 +415,7 @@ namespace SRegExp2 {
 		}
 		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
-			nright.get().reset(right...);
+			nright.getRef().reset(right...);
 		}
 		template <unsigned int id> inline bool get(CatchReturn &) 
 		{
@@ -431,7 +432,7 @@ namespace SRegExp2 {
 			if ((positive && checkChar(string, deep)) || (!positive && !checkChar(string, deep)))
 			{
 				size_t pos{0};
-				if (nright.get().match(string.add(1), pos, deep, root, right...))
+				if (nright.getRef().match(string.add(1), pos, deep, root, right...))
 				{
 					move = pos+1;
 					return true;
@@ -458,7 +459,7 @@ namespace SRegExp2 {
 		}
 		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
-			nright.get().reset(right...);
+			nright.getRef().reset(right...);
 		}
 		template <unsigned int id> inline bool get(CatchReturn &) 
 		{
@@ -475,7 +476,7 @@ namespace SRegExp2 {
 			if ((positive && checkChar(string, deep)) || (!positive && !checkChar(string, deep)))
 			{
 				size_t pos{0};
-				if (nright.get().match(string.add(1), pos, deep, root, right...))
+				if (nright.getRef().match(string.add(1), pos, deep, root, right...))
 				{
 					move = pos+1;
 					return true;
@@ -503,7 +504,7 @@ namespace SRegExp2 {
 		}
 		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
-			nright.get().reset(right...);
+			nright.getRef().reset(right...);
 		}
 		template <unsigned int id> inline bool get(CatchReturn &) 
 		{
@@ -520,7 +521,7 @@ namespace SRegExp2 {
 			if ((positive && checkChar(string, deep)) || (!positive && !checkChar(string, deep)))
 			{
 				size_t pos{0};
-				if (nright.get().match(string.add(1), pos, deep, root, right...))
+				if (nright.getRef().match(string.add(1), pos, deep, root, right...))
 				{
 					move = pos+1;
 					return true;
@@ -547,7 +548,7 @@ namespace SRegExp2 {
 		}
 		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
-			nright.get().reset(right...);
+			nright.getRef().reset(right...);
 		}
 		template <unsigned int id> inline bool get(CatchReturn &) 
 		{
@@ -556,19 +557,19 @@ namespace SRegExp2 {
 	};
 	
 	// templated struct which represent catch-of-content braces in regexp, ID is unique identify of this content	
-	template <unsigned int id, typename MemoryType, typename Inner, typename... Rest> struct CatchContent<id, MemoryType, Inner, Rest...>: public CatchContent<id, Seq<Inner,Rest...>>
+	template <unsigned int id, typename MemoryType, typename Inner, typename... Rest> struct CatchContent<id, MemoryType, Inner, Rest...>: public CatchContent<id, MemoryType, Seq<Inner,Rest...>>
 	{
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
 		{
-			return CatchContent<id, Seq<Inner,Rest...>>::match(string, move, deep, root, nright, right...);
+			return CatchContent<id, MemoryType, Seq<Inner,Rest...>>::match(string, move, deep, root, nright, right...);
 		}
 		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
-			CatchContent<id, Seq<Inner,Rest...>>::reset(nright, right...);
+			CatchContent<id, MemoryType, Seq<Inner,Rest...>>::reset(nright, right...);
 		}
 		template <unsigned int subid> inline bool get(CatchReturn & catches) 
 		{
-			return CatchContent<id, Seq<Inner,Rest...>>::template get<subid>(catches);
+			return CatchContent<id, MemoryType, Seq<Inner,Rest...>>::template get<subid>(catches);
 		}
 	};
 	
@@ -592,7 +593,7 @@ namespace SRegExp2 {
 			{
 				addr = memory.add({begin,len});
 			}
-			return nright.get().match(string, move, deep, root, right...);
+			return nright.getRef().match(string, move, deep, root, right...);
 			
 		}
 		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight>, Right...)
@@ -660,7 +661,7 @@ namespace SRegExp2 {
 						if (!string.equalToOriginal(ctch->begin+(ctch->length-l-1),l)) return false;
 					}
 					size_t tmp{0};
-					if (nright.get().match(string.add(ctch->length), tmp, deep, root, right...))
+					if (nright.getRef().match(string.add(ctch->length), tmp, deep, root, right...))
 					{
 						move += ctch->length + tmp;
 						return true;
@@ -679,7 +680,7 @@ namespace SRegExp2 {
 		}
 		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
-			nright.get().reset(right...);
+			nright.getRef().reset(right...);
 		}
 		template <unsigned int subid> inline bool get(CatchReturn &) 
 		{
@@ -701,7 +702,7 @@ namespace SRegExp2 {
 						if (!string.equalToOriginal(ctch->begin+l,l)) return false;
 					}
 					size_t tmp{0};
-					if (nright.get().match(string.add(ctch->length), tmp, deep, root, right...))
+					if (nright.getRef().match(string.add(ctch->length), tmp, deep, root, right...))
 					{
 						move += ctch->length + tmp;
 						return true;
@@ -720,7 +721,7 @@ namespace SRegExp2 {
 		}
 		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
-			nright.get().reset(right...);
+			nright.getRef().reset(right...);
 		}
 		template <unsigned int subid> inline bool get(CatchReturn &) 
 		{
@@ -751,7 +752,7 @@ namespace SRegExp2 {
 		}
 		template <unsigned int id> inline bool get(CatchReturn & catches) 
 		{
-			return FirstOption::template get<id>(catches) || rest.get<id>(catches);
+			return FirstOption::template get<id>(catches) || rest.template get<id>(catches);
 		}
 	};
 	
@@ -852,10 +853,10 @@ namespace SRegExp2 {
 			
 			for (unsigned int cycle{0}; (!max) || (cycle <= max); ++cycle)
 			{
-				if (nright.get().match(string.add(pos), tmp = 0, deep+1, root, right...) && (cycle >= min))
+				if (nright.getRef().match(string.add(pos), tmp = 0, deep+1, root, right...) && (cycle >= min))
 				{
 					allRightContext.remember(nright, right...);
-					nright.get().reset(right...);
+					nright.getRef().reset(right...);
 					lastFound = pos + tmp;
 					DEBUG_PRINTF(">> found at %zu\n",lastFound);
 				}
@@ -928,6 +929,32 @@ namespace SRegExp2 {
 		}
 	};
 	
+	// debug template
+	template <unsigned int part, typename... Inner> struct Debug: Sequence<Inner...>
+	{
+		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
+		{
+			if (Sequence<Inner...>::match(string, move, deep, root, nright, right...))
+			{
+				std::cout << "[part "<<part<<": match; move="<<move<<"; right="<<sizeof...(Right)<<"]\n";
+				return true;
+			}
+			else
+			{
+				std::cout << "[part "<<part<<": no match; move="<<move<<"; right="<<sizeof...(Right)<<"]\n";
+				return false;
+			}
+		}
+		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
+		{
+			Sequence<Inner...>::reset(nright, right...);
+		}
+		template <unsigned int id> inline bool get(CatchReturn & catches) 
+		{
+			return Sequence<Inner...>::template get<id>(catches);
+		}
+	};
+	
 	// templated struct which contains regular expression and is used be user :)
 	template <typename... Definition> struct RegularExpression
 	{
@@ -980,7 +1007,7 @@ namespace SRegExp2 {
 		}
 		template <unsigned int id, typename StringType> inline auto part(const StringType string, unsigned int subid = 0) -> decltype(string)
 		{
-			return string.substr(this->getCatch<id>()[subid].begin, this->getCatch<id>()[subid].length);
+			return string.substr(getCatch<id>()[subid].begin, getCatch<id>()[subid].length);
 		}
 	};
 }
