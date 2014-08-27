@@ -191,6 +191,31 @@ namespace SRegExp2 {
 		}
 	};
 	
+	template <unsigned int id, typename T, typename... Tx> inline bool getCatchFromSubrexpHelper(CatchReturn & catches, T & from, Tx &... next)
+	{
+		if (!from.template get<id>(catches))
+		{
+			return getCatchFromSubrexpHelper(catches, next...);
+		}
+		else
+		{
+			return true;
+		}
+	}
+	
+	template <unsigned int id, typename T> inline bool
+	 getCatchFromSubrexpHelper(CatchReturn & catches, T & from)
+	{
+		return from.template get<id>(catches);
+	}
+	
+	template <unsigned int id, typename T, typename... Tx> inline CatchReturn getCatchFromSubrexp(T & from, Tx &... next)
+	{
+		CatchReturn catches;
+		getCatchFromSubrexpHelper<id>(catches, from, next...);
+		return catches;
+	}
+	
 	// static-allocated memory which contains "catched" pairs
 	
 	template <size_t size> struct CheckMemory<StaticMemory<size>> { static const constexpr bool have = true; };
@@ -847,8 +872,9 @@ namespace SRegExp2 {
 			ssize_t lastFound{-1};
 			Closure closure;
 			
-			Repeat<min, max, Inner> innerContext{*this};
-			AllRightContext<Reference<NearestRight>, Right...> allRightContext(nright, right...);
+			// Less elegant but working :)
+			auto memoryOfMe = *this;
+			Root memoryOfRoot{root};
 			
 			size_t tmp;
 			
@@ -856,24 +882,22 @@ namespace SRegExp2 {
 			{
 				if (nright.getRef().match(string.add(pos), tmp = 0, deep+1, root, right...) && (cycle >= min))
 				{
-					allRightContext.remember(nright, right...);
-					nright.getRef().reset(right...);
 					lastFound = pos + tmp;
-					DEBUG_PRINTF(">> found at %zu\n",lastFound);
+					memoryOfRoot = memoryOfRoot; 
+					nright.getRef().reset(right...);
 				}
 				// in next expression "empty" is needed
-				*this = innerContext;
+				*this = memoryOfMe;
 				if (Inner::match(string.add(pos), tmp = 0, deep+1, root, makeRef(closure)))
 				{
-					innerContext = *this;
+					memoryOfMe = *this;
 					pos += tmp;
 				}
 				else 
 				{
 					if (lastFound >= 0)
 					{
-						*this = innerContext;
-						allRightContext.restore(nright, right...);
+						root = memoryOfRoot;
 						DEBUG_PRINTF("cycle done (cycle = %zu)\n",cycle);
 						move += static_cast<size_t>(lastFound);
 						return true;
@@ -916,7 +940,11 @@ namespace SRegExp2 {
 					move += pos + imove;
 					return true;
 				}
-				else pos++;
+				else
+				{
+					reset(nright, right...);
+					pos++;
+				}
 			}
 			return false;
 		}
