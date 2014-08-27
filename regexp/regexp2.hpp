@@ -230,6 +230,15 @@ namespace SRegExp2 {
 		{
 			count = 0;
 		}
+		StaticMemory & operator=(const StaticMemory & right)
+		{
+			count = right.count;
+			for (unsigned int i{0}; i != count; ++i)
+			{
+				data[i] = right.data[i];
+			}
+			return *this;
+		}
 		void set(unsigned int addr, Catch content)
 		{
 			if (addr < size) data[addr] = content;
@@ -266,6 +275,11 @@ namespace SRegExp2 {
 		inline void reset()
 		{
 			data = {};
+		}
+		DynamicMemory & operator=(const DynamicMemory & right)
+		{
+			data = right.data;
+			return *this;
 		}
 		void set(unsigned int addr, Catch content)
 		{
@@ -883,7 +897,7 @@ namespace SRegExp2 {
 				if (nright.getRef().match(string.add(pos), tmp = 0, deep+1, root, right...) && (cycle >= min))
 				{
 					lastFound = pos + tmp;
-					memoryOfRoot = memoryOfRoot; 
+					memoryOfRoot = root; 
 					nright.getRef().reset(right...);
 				}
 				// in next expression "empty" is needed
