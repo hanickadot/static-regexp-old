@@ -15,7 +15,7 @@ IGNORE :=
 INCLUDE_HEADS := -I. 
 LIBS += 
 
-override CXXFLAGS += -Wall -Wextra -pedantic
+override CXXFLAGS += -Wall -Wextra -pedantic -ftemplate-backtrace-limit=0
 
 include mk/compile.mk
 
