@@ -67,6 +67,8 @@ namespace SRegExp2 {
 	template <unsigned int id, typename... Inner> using DynamicCatch = CatchContent<id, DynamicMemory, Inner...>;
 	template <wchar_t a, wchar_t b, wchar_t... rest> using CRange = CharacterRange<true, a, b, rest...>;
 	template <wchar_t... codes> using Str = String<codes...>;
+	using Space = Chr<' '>;
+	using WhiteSpace = Set<' ','\t','\r','\n'>;
 	
 	template <typename CharType> using CompareFnc = bool (*)(const CharType, const CharType, const CharType);
 	
