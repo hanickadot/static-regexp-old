@@ -12,8 +12,8 @@ APPLICATION_TARGETS := $(wildcard src/benchmark/*.cpp) $(wildcard src/mains/*.cp
 
 SOURCE_FILES := $(shell find . -name *.cpp | cut -c 3-) 
 IGNORE := 
-INCLUDE_HEADS := -I. 
-LIBS += 
+INCLUDE_HEADS := -I. -I/usr/local/include
+LIBS += -lgeoip
 
 override CXXFLAGS += -Wall -Wextra -pedantic -ftemplate-backtrace-limit=0
 
