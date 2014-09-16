@@ -1,7 +1,7 @@
 #include "regexp/regexp2.hpp"
 #include <cstdio>
 
-using namespace SRegExp2;
+using namespace SRX;
 
 bool plus()
 {

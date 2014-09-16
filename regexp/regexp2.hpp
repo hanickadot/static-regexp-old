@@ -48,7 +48,7 @@
 
 #include "abstraction.hpp"
 
-namespace SRegExp2 {
+namespace SRX {
 	
 	// available templates for users:
 	struct Begin; // ^

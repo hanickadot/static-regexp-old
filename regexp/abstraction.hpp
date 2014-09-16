@@ -22,7 +22,7 @@
 #ifndef __REGEXP__ABSTRACTION__HPP__
 #define __REGEXP__ABSTRACTION__HPP__
 
-namespace SRegExp2 {
+namespace SRX {
 
 template <typename BaseType, typename CharType, bool (*compare)(CharType, CharType, CharType)> struct StringAbstraction;
 
