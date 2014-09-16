@@ -8,7 +8,7 @@ Usage
 
 	#include "regexp/regexp2.hpp"
 	
-	using namespace SRegExp2;
+	using namespace SRX;
 	
 	// Equivalent to ^([a-z]+)
 	RegularExpression<Begin, OneCatch<1, Plus<CRange<'a','z'>> > > regexp;
