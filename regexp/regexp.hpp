@@ -1145,6 +1145,11 @@ namespace SRX {
 	template <typename... Definition> struct RegularExpression
 	{
 		Eat<Definition...> eat;
+		void reset()
+		{
+			Closure closure;
+			eat.reset(makeRef(closure));
+		}
 		template <CompareFnc<char> compare = charactersAreEqual<char>> inline bool operator()(std::string string)
 		{
 			size_t pos{0};
