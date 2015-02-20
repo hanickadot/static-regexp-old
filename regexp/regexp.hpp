@@ -304,7 +304,7 @@ namespace SRX {
 	public:
 		inline void reset()
 		{
-			data = {};
+			data.resize(0);
 		}
 		DynamicMemory & operator=(const DynamicMemory & right)
 		{
@@ -730,24 +730,23 @@ namespace SRX {
 			bool ret{Inner::match(string, move, deep, root, makeRef(mark), nright, right...)};
 			if (!ret)
 			{
-				memory.reset();
 				reset(nright, right...);
 			}
 			return ret;
 		}
 		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
+			memory.reset();
 			Inner::reset(nright, right...);
 		}
 		template <unsigned int subid> inline bool getCatch(CatchReturn & catches) const
 		{
 			if (subid == id) 
 			{
-				//printf("here! size = %zu\n",memory.getCount());
 				catches = memory.getCatches();
 				return true;
 			}
-			else return Inner::template getCatch<id>(catches);
+			else return Inner::template getCatch<subid>(catches);
 		}
 		template <unsigned int key> inline unsigned int getIdentifier() const
 		{
