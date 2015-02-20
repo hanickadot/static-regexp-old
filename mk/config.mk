@@ -33,7 +33,7 @@ ifneq (,$(findstring clang,$(CXX_VERSION)))
   ifeq ($(CXX_CLANG_MINOR),3)
    # supported version (partially)
   else 
-	 ifeq ($(CXX_CLANG_MINOR),4)
+	 ifeq ($(CXX_CLANG_MINOR),5)
     # supported version (partially)
    else 
 	  $(error "You don't have at least CLANG 3.3 (with C++11)")
