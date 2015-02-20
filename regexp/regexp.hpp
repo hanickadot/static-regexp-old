@@ -119,9 +119,9 @@ namespace SRX {
 		{
 			return true;
 		}
-		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight>, Right...)
+		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
-			
+			nright.getRef().reset(right...);
 		}
 		inline void reset()
 		{
@@ -702,9 +702,9 @@ namespace SRX {
 			return nright.getRef().match(string, move, deep, root, right...);
 			
 		}
-		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight>, Right...)
+		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
-		
+			nright.getRef().reset(right...);
 		}
 		Mark(uint32_t lbegin, MemoryType & lmemory): begin{lbegin}, len{0}, memory(lmemory)
 		{
@@ -863,9 +863,10 @@ namespace SRX {
 				return false;
 			}
 		}
-		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight>, Right...)
+		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
 			matched = false;
+			nright.getRef().reset(right...);
 		}
 		template <unsigned int> inline bool getCatch(CatchReturn &) const
 		{
@@ -895,7 +896,8 @@ namespace SRX {
 		}
 		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
-			FirstOption::reset(nright, right...);
+			Closure closure;
+			FirstOption::reset(nright, makeRef(closure));
 			rest.reset(nright, right...);
 		}
 		template <unsigned int id> inline bool getCatch(CatchReturn & catches) const
@@ -916,9 +918,9 @@ namespace SRX {
 		{
 			return false;
 		}
-		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight>, Right...)
+		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
-			
+			nright.getRef().reset(right...);
 		}
 		template <unsigned int> inline bool getCatch(CatchReturn &) const 
 		{
@@ -1024,7 +1026,7 @@ namespace SRX {
 			
 			for (unsigned int cycle{0}; (!max) || (cycle <= max); ++cycle)
 			{
-				if (nright.getRef().match(string.add(pos), tmp = 0, deep+1, root, right...) && (cycle >= min))
+				if ((cycle >= min) && nright.getRef().match(string.add(pos), tmp = 0, deep+1, root, right...))
 				{
 					lastFound = pos + tmp;
 					memoryOfRoot = root; 

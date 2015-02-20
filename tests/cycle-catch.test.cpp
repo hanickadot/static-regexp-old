@@ -11,19 +11,21 @@ bool justOneForEach(const char * str)
 	if (regexp(str))
 	{
 		unsigned int count{0};
-		for (auto tmp: regexp.getCatch<1>()) count++;
-		for (auto tmp: regexp.getCatch<2>()) count++;
+		count += regexp.getCatch<1>().size();
+		count += regexp.getCatch<2>().size();
+		
 		if (count != 2)
 		{
 			fprintf(stderr,"More catches then 2 expected! (%u)\n",count);
-			fprintf(stderr,"input = '%s'\n",str);
+			fprintf(stderr,"input = '%s' (%u)\n",str,count);
 			unsigned int id{0};
 			for (auto tmp: regexp.getCatch<1>()) printf("1.%u: '%.*s'\n",id++,(int)tmp.length,str+tmp.begin);
 			id = 0;
 			for (auto tmp: regexp.getCatch<2>()) printf("2.%u: '%.*s'\n",id++,(int)tmp.length,str+tmp.begin);
 			id = 0;
+			return false;
 		}
-		return count == 2;
+		return true;
 	}
 	return false;
 }
