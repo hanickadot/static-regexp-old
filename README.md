@@ -6,7 +6,7 @@ Very fast static regular expression using c++11 templates.
 Usage
 -----
 
-	#include "regexp/regexp2.hpp"
+	#include "regexp/regexp.hpp"
 	
 	using namespace SRX;
 	
@@ -86,7 +86,7 @@ Example of generated code using clang 3.4
 
 will turn into:
 
-	#include "regexp/regexp2.hpp"
+	#include "regexp/regexp.hpp"
 	#include <cstdio>
 
 	using namespace SRegExp2;
