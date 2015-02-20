@@ -74,6 +74,9 @@ namespace SRX {
 	struct DynamicMemory;
 	using OneMemory = StaticMemory<1>;
 	
+	// identifier
+	template <unsigned int key, unsigned int value> struct Identifier;
+	
 	// aliases:
 	using Any = CharacterClass<true>; // .
 	template <wchar_t... codes> using Set = CharacterClass<true, codes...>;
@@ -89,9 +92,12 @@ namespace SRX {
 	template <unsigned int id, typename... Inner> using DynamicCatch = CatchContent<id, DynamicMemory, Inner...>;
 	template <wchar_t a, wchar_t b, wchar_t... rest> using CRange = CharacterRange<true, a, b, rest...>;
 	template <wchar_t... codes> using Str = String<codes...>;
+	template <unsigned int key, unsigned int value> using Id = Identifier<key,value>;
 	using Space = Chr<' '>;
 	using WhiteSpace = Set<' ','\t','\r','\n'>;
 	using Number = CRange<'0','9'>;
+	
+	
 	
 	template <typename CharType> using CompareFnc = bool (*)(const CharType, const CharType, const CharType);
 	
@@ -121,9 +127,13 @@ namespace SRX {
 		{
 			
 		}
-		template <unsigned int id> inline bool get(CatchReturn &) 
+		template <unsigned int> inline bool getCatch(CatchReturn &) const 
 		{
 			return false;
+		}
+		template <unsigned int> inline unsigned int getIdentifier() const
+		{
+			return 0;
 		}
 	};
 	
@@ -184,7 +194,7 @@ namespace SRX {
 	// object which represent all of "catched" pairs, support for range-based FOR
 	struct CatchReturn {
 	protected:
-		Catch * vdata;
+		const Catch * vdata;
 		size_t vsize;
 	public:
 		size_t size() const {
@@ -194,18 +204,18 @@ namespace SRX {
 			return vdata;
 		}
 		CatchReturn(): vdata{nullptr}, vsize{0} { }
-		CatchReturn(Catch * ldata, size_t lsize): vdata{ldata}, vsize{lsize} { }
-		Catch * get(const size_t id) {
+		CatchReturn(const Catch * ldata, size_t lsize): vdata{ldata}, vsize{lsize} { }
+		const Catch * get(const size_t id) {
 			if (id < vsize) return &vdata[id];
 			else return nullptr;
 		}
-		Catch * begin() const {
+		const Catch * begin() const {
 			return vdata;
 		}
-		Catch * end() const {
+		const Catch * end() const {
 			return (vdata + vsize);
 		}
-		Catch operator[](unsigned int id)
+		const Catch operator[](unsigned int id)
 		{
 			if (id < vsize) return vdata[id];
 			else return Catch{0,0};
@@ -214,7 +224,7 @@ namespace SRX {
 	
 	template <unsigned int id, typename T, typename... Tx> inline bool getCatchFromSubrexpHelper(CatchReturn & catches, T & from, Tx &... next)
 	{
-		if (!from.template get<id>(catches))
+		if (!from.template getCatch<id>(catches))
 		{
 			return getCatchFromSubrexpHelper(catches, next...);
 		}
@@ -224,10 +234,9 @@ namespace SRX {
 		}
 	}
 	
-	template <unsigned int id, typename T> inline bool
-	 getCatchFromSubrexpHelper(CatchReturn & catches, T & from)
+	template <unsigned int id, typename T> inline bool getCatchFromSubrexpHelper(CatchReturn & catches, T & from)
 	{
-		return from.template get<id>(catches);
+		return from.template getCatch<id>(catches);
 	}
 	
 	template <unsigned int id, typename T, typename... Tx> inline CatchReturn getCatchFromSubrexp(T & from, Tx &... next)
@@ -274,11 +283,11 @@ namespace SRX {
 			}
 			return -1;
 		}
-		uint32_t getCount()
+		uint32_t getCount() const
 		{
 			return count;
 		}
-		CatchReturn getCatches()
+		CatchReturn getCatches() const
 		{
 			return CatchReturn{data, count};
 		}
@@ -311,11 +320,11 @@ namespace SRX {
 			data.push_back(content);
 			return data.size()-1;
 		}
-		size_t getCount()
+		size_t getCount() const
 		{
 			return data.size();
 		}
-		CatchReturn getCatches()
+		CatchReturn getCatches() const
 		{
 			return CatchReturn{data.data(), getCount()};
 		}
@@ -339,9 +348,13 @@ namespace SRX {
 		{
 			nright.getRef().reset(right...);
 		}
-		template <unsigned int id> inline bool get(CatchReturn &) 
+		template <unsigned int> inline bool getCatch(CatchReturn &) const 
 		{
 			return false;
+		}
+		template <unsigned int> inline unsigned int getIdentifier() const
+		{
+			return 0;
 		}
 	};
 	
@@ -361,9 +374,13 @@ namespace SRX {
 		{
 			nright.getRef().reset(right...);
 		}
-		template <unsigned int id> inline bool get(CatchReturn &) 
+		template <unsigned int> inline bool getCatch(CatchReturn &) const 
 		{
 			return false;
+		}
+		template <unsigned int> inline unsigned int getIdentifier() const
+		{
+			return 0;
 		}
 	};
 	
@@ -412,9 +429,13 @@ namespace SRX {
 		{
 			nright.getRef().reset(right...);
 		}
-		template <unsigned int id> inline bool get(CatchReturn &) 
+		template <unsigned int> inline bool getCatch(CatchReturn &) const 
 		{
 			return false;
+		}
+		template <unsigned int> inline unsigned int getIdentifier() const
+		{
+			return 0;
 		}
 	};
 	
@@ -433,9 +454,13 @@ namespace SRX {
 		{
 			nright.getRef().reset(right...);
 		}
-		template <unsigned int id> inline bool get(CatchReturn &) 
+		template <unsigned int> inline bool getCatch(CatchReturn &) const 
 		{
 			return false;
+		}
+		template <unsigned int> inline unsigned int getIdentifier() const
+		{
+			return 0;
 		}
 	};
 	
@@ -478,9 +503,13 @@ namespace SRX {
 		{
 			nright.getRef().reset(right...);
 		}
-		template <unsigned int id> inline bool get(CatchReturn &) 
+		template <unsigned int> inline bool getCatch(CatchReturn &) const 
 		{
 			return false;
+		}
+		template <unsigned int> inline unsigned int getIdentifier() const
+		{
+			return 0;
 		}
 	};
 	
@@ -522,9 +551,13 @@ namespace SRX {
 		{
 			nright.getRef().reset(right...);
 		}
-		template <unsigned int id> inline bool get(CatchReturn &) 
+		template <unsigned int> inline bool getCatch(CatchReturn &) const 
 		{
 			return false;
+		}
+		template <unsigned int> inline unsigned int getIdentifier() const
+		{
+			return 0;
 		}
 	};	
 	
@@ -567,9 +600,13 @@ namespace SRX {
 		{
 			nright.getRef().reset(right...);
 		}
-		template <unsigned int id> inline bool get(CatchReturn &) 
+		template <unsigned int> inline bool getCatch(CatchReturn &) const 
 		{
 			return false;
+		}
+		template <unsigned int> inline unsigned int getIdentifier() const
+		{
+			return 0;
 		}
 	};
 	
@@ -611,9 +648,13 @@ namespace SRX {
 		{
 			nright.getRef().reset(right...);
 		}
-		template <unsigned int id> inline bool get(CatchReturn &) 
+		template <unsigned int> inline bool getCatch(CatchReturn &) const 
 		{
 			return false;
+		}
+		template <unsigned int> inline unsigned int getIdentifier() const
+		{
+			return 0;
 		}
 	};
 	
@@ -628,9 +669,13 @@ namespace SRX {
 		{
 			CatchContent<id, MemoryType, Seq<Inner,Rest...>>::reset(nright, right...);
 		}
-		template <unsigned int subid> inline bool get(CatchReturn & catches) 
+		template <unsigned int subid> inline bool getCatch(CatchReturn & catches) const
 		{
-			return CatchContent<id, MemoryType, Seq<Inner,Rest...>>::template get<subid>(catches);
+			return CatchContent<id, MemoryType, Seq<Inner,Rest...>>::template getCatch<subid>(catches);
+		}
+		template <unsigned int key> inline unsigned int getIdentifier() const
+		{
+			return CatchContent<id, MemoryType, Seq<Inner,Rest...>>::template getIdentifier<key>();
 		}
 	};
 	
@@ -694,7 +739,7 @@ namespace SRX {
 		{
 			Inner::reset(nright, right...);
 		}
-		template <unsigned int subid> inline bool get(CatchReturn & catches) 
+		template <unsigned int subid> inline bool getCatch(CatchReturn & catches) const
 		{
 			if (subid == id) 
 			{
@@ -702,7 +747,11 @@ namespace SRX {
 				catches = memory.getCatches();
 				return true;
 			}
-			else return Inner::template get<id>(catches);
+			else return Inner::template getCatch<id>(catches);
+		}
+		template <unsigned int key> inline unsigned int getIdentifier() const
+		{
+			return Inner::template getIdentifier<key>();
 		}
 	};
 	
@@ -713,7 +762,7 @@ namespace SRX {
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
 		{
 			CatchReturn ret;
-			if (root.template get<baseid>(ret)) {
+			if (root.template getCatch<baseid>(ret)) {
 				//printf("catch found (size = %zu)\n",ret.size());
 				const Catch * ctch{ret.get(catchid)};
 				if (ctch) {
@@ -743,9 +792,13 @@ namespace SRX {
 		{
 			nright.getRef().reset(right...);
 		}
-		template <unsigned int subid> inline bool get(CatchReturn &) 
+		template <unsigned int> inline bool getCatch(CatchReturn &) const 
 		{
 			return false;
+		}
+		template <unsigned int> inline unsigned int getIdentifier() const
+		{
+			return 0;
 		}
 	};
 	
@@ -754,7 +807,7 @@ namespace SRX {
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
 		{
 			CatchReturn ret;
-			if (root.template get<baseid>(ret)) {
+			if (root.template getCatch<baseid>(ret)) {
 				//printf("catch found (size = %zu)\n",ret.size());
 				const Catch * ctch{ret.get(catchid)};
 				if (ctch) {
@@ -784,9 +837,44 @@ namespace SRX {
 		{
 			nright.getRef().reset(right...);
 		}
-		template <unsigned int subid> inline bool get(CatchReturn &) 
+		template <unsigned int> inline bool getCatch(CatchReturn &) const 
 		{
 			return false;
+		}
+		template <unsigned int> inline unsigned int getIdentifier() const
+		{
+			return 0;
+		}
+	};
+	
+	// identify path thru regexp
+	template <unsigned int key, unsigned int value> struct Identifier
+	{
+		bool matched{false};
+		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
+		{
+			if (nright.getRef().match(string, move, deep, root, right...))
+			{
+				matched = true;
+				return true;
+			}
+			else 
+			{
+				matched = false;
+				return false;
+			}
+		}
+		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight>, Right...)
+		{
+			matched = false;
+		}
+		template <unsigned int> inline bool getCatch(CatchReturn &) const
+		{
+			return false;
+		}
+		template <unsigned int rkey> inline unsigned int getIdentifier() const
+		{
+			return matched ? (key == rkey ? value : 0) : 0;
 		}
 	};
 	
@@ -811,9 +899,14 @@ namespace SRX {
 			FirstOption::reset(nright, right...);
 			rest.reset(nright, right...);
 		}
-		template <unsigned int id> inline bool get(CatchReturn & catches) 
+		template <unsigned int id> inline bool getCatch(CatchReturn & catches) const
 		{
-			return FirstOption::template get<id>(catches) || rest.template get<id>(catches);
+			return FirstOption::template getCatch<id>(catches) || rest.template getCatch<id>(catches);
+		}
+		template <unsigned int rkey> inline unsigned int getIdentifier() const
+		{
+			if (FirstOption::template getIdentifier<rkey>()) return FirstOption::template getIdentifier<rkey>();
+			else return rest.template getIdentifier<rkey>();
 		}
 	};
 	
@@ -828,9 +921,13 @@ namespace SRX {
 		{
 			
 		}
-		template <unsigned int id> inline bool get(CatchReturn &) 
+		template <unsigned int> inline bool getCatch(CatchReturn &) const 
 		{
 			return false;
+		}
+		template <unsigned int> inline unsigned int getIdentifier() const
+		{
+			return 0;
 		}
 	};
 	
@@ -851,9 +948,14 @@ namespace SRX {
 		{
 			First::reset(makeRef(rest), nright, right...);
 		}
-		template <unsigned int id> inline bool get(CatchReturn & catches) 
+		template <unsigned int id> inline bool getCatch(CatchReturn & catches) const
 		{
-			return First::template get<id>(catches) || rest.template get<id>(catches);
+			return First::template getCatch<id>(catches) || rest.template getCatch<id>(catches);
+		}
+		template <unsigned int rkey> inline unsigned int getIdentifier() const
+		{
+			if (First::template getIdentifier<rkey>()) return First::template getIdentifier<rkey>();
+			else return rest.template getIdentifier<rkey>();
 		}
 	};
 
@@ -873,9 +975,13 @@ namespace SRX {
 		{
 			First::reset(nright, right...);
 		}
-		template <unsigned int id> inline bool get(CatchReturn & catches) 
+		template <unsigned int id> inline bool getCatch(CatchReturn & catches) const
 		{
-			return First::template get<id>(catches);
+			return First::template getCatch<id>(catches);
+		}
+		template <unsigned int rkey> inline unsigned int getIdentifier() const
+		{
+			return First::template getIdentifier<rkey>();
 		}
 	};
 	
@@ -892,9 +998,13 @@ namespace SRX {
 		{
 			Repeat<min, max, Seq<Inner,Rest...>>::reset(nright, right...);
 		}
-		template <unsigned int id> inline bool get(CatchReturn & catches) 
+		template <unsigned int id> inline bool getCatch(CatchReturn & catches) const
 		{
-			return Repeat<min, max, Seq<Inner,Rest...>>::template get<id>(catches);
+			return Repeat<min, max, Seq<Inner,Rest...>>::template getCatch<id>(catches);
+		}
+		template <unsigned int rkey> inline unsigned int getIdentifier() const
+		{
+			return Repeat<min, max, Seq<Inner,Rest...>>::template getIdentifier<rkey>();
 		}
 	};
 	
@@ -948,9 +1058,13 @@ namespace SRX {
 		{
 			Inner::reset(nright, right...);
 		}
-		template <unsigned int id> inline bool get(CatchReturn & catches) 
+		template <unsigned int id> inline bool getCatch(CatchReturn & catches) const
 		{
-			return Inner::template get<id>(catches);
+			return Inner::template getCatch<id>(catches);
+		}
+		template <unsigned int rkey> inline unsigned int getIdentifier() const
+		{
+			return Inner::template getIdentifier<rkey>();
 		}
 	};
 	
@@ -987,9 +1101,13 @@ namespace SRX {
 		{
 			Sequence<Inner...>::reset(nright, right...);
 		}
-		template <unsigned int id> inline bool get(CatchReturn & catches) 
+		template <unsigned int id> inline bool getCatch(CatchReturn & catches) const
 		{
-			return Sequence<Inner...>::template get<id>(catches);
+			return Sequence<Inner...>::template getCatch<id>(catches);
+		}
+		template <unsigned int rkey> inline unsigned int getIdentifier() const
+		{
+			return Sequence<Inner...>::template getIdentifier<rkey>();
 		}
 	};
 	
@@ -1013,9 +1131,13 @@ namespace SRX {
 		{
 			Sequence<Inner...>::reset(nright, right...);
 		}
-		template <unsigned int id> inline bool get(CatchReturn & catches) 
+		template <unsigned int id> inline bool getCatch(CatchReturn & catches) const
 		{
-			return Sequence<Inner...>::template get<id>(catches);
+			return Sequence<Inner...>::template getCatch<id>(catches);
+		}
+		template <unsigned int rkey> inline unsigned int getIdentifier() const
+		{
+			return Sequence<Inner...>::template getIdentifier<rkey>();
 		}
 	};
 	
@@ -1063,10 +1185,14 @@ namespace SRX {
 		{
 			return operator()<compare>(string);
 		}
+		template <unsigned int key> unsigned int getIdentifier()
+		{
+			return eat.template getIdentifier<key>();
+		}
 		template <unsigned int id> inline CatchReturn getCatch()
 		{
 			CatchReturn catches;
-			eat.template get<id>(catches);
+			eat.template getCatch<id>(catches);
 			return catches;
 		}
 		template <unsigned int id, typename StringType> inline auto part(const StringType string, unsigned int subid = 0) -> decltype(string)
