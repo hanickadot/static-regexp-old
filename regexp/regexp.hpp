@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 // 
-// Copyright (c) 2014 Hana Dusíková (hanicka@hanicka.net)
+// Copyright (c) 2014-2015 Hana Dusíková (hanicka@hanicka.net)
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -19,8 +19,8 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef __REGEXP__REGEXP2__HPP__
-#define __REGEXP__REGEXP2__HPP__
+#ifndef __REGEXP__REGEXP__HPP__
+#define __REGEXP__REGEXP__HPP__
 
 #include <string>
 #include <vector>
