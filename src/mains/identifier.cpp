@@ -5,12 +5,12 @@ using namespace SRX;
 
 int main (int argc, char const *argv[])
 {
-	RegularExpression< Begin, OneCatch<1,Plus<CRange<'a','z'>>>, ReCatch<1>, End > regexp;
+	RegularExpression<Begin, Sel< Seq<Id<1,1>, Chr<'a'>,Chr<'b'>,Chr<'c'>>, Seq<Id<1,2>, Chr<'d'>,Chr<'e'>,Chr<'f'>> > > regexp;
 	if (argc >= 2)
 	{
 		if (regexp(argv[1]))
 		{
-			printf("yes\n");
+			printf("yes: %d\n", regexp.getIdentifier<1>());
 		}
 		else
 		{
