@@ -470,7 +470,7 @@ namespace SRX {
 		static const constexpr bool isEmpty{false};
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
 		{
-			if ((positive && checkChar(string, deep)) || (!positive && !checkChar(string, deep)))
+			if ((positive && checkChar(string, deep)) || (!positive && !checkChar(string, deep) && !string.isEnd()))
 			{
 				size_t pos{0};
 				if (nright.getRef().match(string.add(1), pos, deep, root, right...))
@@ -519,7 +519,7 @@ namespace SRX {
 		static const constexpr bool isEmpty{true};
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
 		{
-			if ((positive && checkChar(string, deep)) || (!positive && !checkChar(string, deep)))
+			if ((positive && checkChar(string, deep)) || (!positive && !checkChar(string, deep) && !string.isEnd()))
 			{
 				size_t pos{0};
 				if (nright.getRef().match(string.add(1), pos, deep, root, right...))
@@ -567,7 +567,7 @@ namespace SRX {
 		static const constexpr bool isEmpty{false};
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
 		{
-			if ((positive && checkChar(string, deep)) || (!positive && !checkChar(string, deep)))
+			if ((positive && checkChar(string, deep)) || (!positive && !checkChar(string, deep) && !string.isEnd()))
 			{
 				size_t pos{0};
 				if (nright.getRef().match(string.add(1), pos, deep, root, right...))
@@ -616,7 +616,7 @@ namespace SRX {
 		static const constexpr bool isEmpty{true};
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
 		{
-			if ((positive && checkChar(string, deep)) || (!positive && !checkChar(string, deep)))
+			if ((positive && checkChar(string, deep)) || (!positive && !checkChar(string, deep) && !string.isEnd()))
 			{
 				size_t pos{0};
 				if (nright.getRef().match(string.add(1), pos, deep, root, right...))
