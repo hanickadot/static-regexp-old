@@ -9,6 +9,15 @@ bool testTrio(std::string input, std::string a, std::string b, std::string c)
 	RegularExpression<Begin, SubRegexp, End> regexp;
 	if (regexp(input))
 	{
+		unsigned int id{0};
+		//printf("input: '%s'\n",input.c_str());
+		//for (auto tmp: regexp.getCatch<1>()) printf("0.%u: '%.*s'\n",id++,(int)tmp.length,input.c_str()+tmp.begin);
+		//id = 0;
+		//for (auto tmp: regexp.getCatch<2>()) printf("1.%u: '%.*s'\n",id++,(int)tmp.length,input.c_str()+tmp.begin);
+		//id = 0;
+		//for (auto tmp: regexp.getCatch<3>()) printf("2.%u: '%.*s'\n",id++,(int)tmp.length,input.c_str()+tmp.begin);
+		//id = 0;
+		//printf("---\n");
 		if (std::string(input.c_str()+regexp.getCatch<1>()[0].begin, regexp.getCatch<1>()[0].length) == a)
 		{
 			if (std::string(input.c_str()+regexp.getCatch<2>()[0].begin, regexp.getCatch<2>()[0].length) == b)
