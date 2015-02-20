@@ -304,7 +304,7 @@ namespace SRX {
 	public:
 		inline void reset()
 		{
-			data = {};
+			data.resize(0);
 		}
 		DynamicMemory & operator=(const DynamicMemory & right)
 		{
@@ -470,7 +470,7 @@ namespace SRX {
 		static const constexpr bool isEmpty{false};
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
 		{
-			if ((positive && checkChar(string, deep)) || (!positive && !checkChar(string, deep)))
+			if ((positive && checkChar(string, deep)) || (!positive && !checkChar(string, deep) && !string.isEnd()))
 			{
 				size_t pos{0};
 				if (nright.getRef().match(string.add(1), pos, deep, root, right...))
@@ -519,7 +519,7 @@ namespace SRX {
 		static const constexpr bool isEmpty{true};
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
 		{
-			if ((positive && checkChar(string, deep)) || (!positive && !checkChar(string, deep)))
+			if ((positive && checkChar(string, deep)) || (!positive && !checkChar(string, deep) && !string.isEnd()))
 			{
 				size_t pos{0};
 				if (nright.getRef().match(string.add(1), pos, deep, root, right...))
@@ -567,7 +567,7 @@ namespace SRX {
 		static const constexpr bool isEmpty{false};
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
 		{
-			if ((positive && checkChar(string, deep)) || (!positive && !checkChar(string, deep)))
+			if ((positive && checkChar(string, deep)) || (!positive && !checkChar(string, deep) && !string.isEnd()))
 			{
 				size_t pos{0};
 				if (nright.getRef().match(string.add(1), pos, deep, root, right...))
@@ -616,7 +616,7 @@ namespace SRX {
 		static const constexpr bool isEmpty{true};
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
 		{
-			if ((positive && checkChar(string, deep)) || (!positive && !checkChar(string, deep)))
+			if ((positive && checkChar(string, deep)) || (!positive && !checkChar(string, deep) && !string.isEnd()))
 			{
 				size_t pos{0};
 				if (nright.getRef().match(string.add(1), pos, deep, root, right...))
@@ -730,24 +730,23 @@ namespace SRX {
 			bool ret{Inner::match(string, move, deep, root, makeRef(mark), nright, right...)};
 			if (!ret)
 			{
-				memory.reset();
 				reset(nright, right...);
 			}
 			return ret;
 		}
 		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
+			memory.reset();
 			Inner::reset(nright, right...);
 		}
 		template <unsigned int subid> inline bool getCatch(CatchReturn & catches) const
 		{
 			if (subid == id) 
 			{
-				//printf("here! size = %zu\n",memory.getCount());
 				catches = memory.getCatches();
 				return true;
 			}
-			else return Inner::template getCatch<id>(catches);
+			else return Inner::template getCatch<subid>(catches);
 		}
 		template <unsigned int key> inline unsigned int getIdentifier() const
 		{
@@ -1145,6 +1144,11 @@ namespace SRX {
 	template <typename... Definition> struct RegularExpression
 	{
 		Eat<Definition...> eat;
+		void reset()
+		{
+			Closure closure;
+			eat.reset(makeRef(closure));
+		}
 		template <CompareFnc<char> compare = charactersAreEqual<char>> inline bool operator()(std::string string)
 		{
 			size_t pos{0};
