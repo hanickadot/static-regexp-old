@@ -7,6 +7,7 @@ using CycleCatch = Seq<Begin,DynamicCatch<1, Star<Chr<'a'>>>, DynamicCatch<2, St
 
 bool justOneForEach(const char * str)
 {
+	printf("\n\n\n-----\n");
 	RegularExpression< CycleCatch > regexp;
 	if (regexp(str))
 	{

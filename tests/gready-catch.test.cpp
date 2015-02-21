@@ -28,17 +28,36 @@ bool testTrio(std::string input, std::string a, std::string b, std::string c)
 				}
 				else
 				{
-					fprintf(stderr,"3. group contains bad data '%.*s'!\n",regexp.getCatch<3>()[0].length,input.c_str()+regexp.getCatch<3>()[0].begin);
+					fprintf(stderr,"3. group contains bad data '%.*s' for '%s'!\n",regexp.getCatch<3>()[0].length,input.c_str()+regexp.getCatch<3>()[0].begin,input.c_str());
+					for (auto tmp: regexp.getCatch<1>()) printf("1.%u: '%.*s'\n",id++,(int)tmp.length,input.c_str()+tmp.begin);
+					id = 0;
+					for (auto tmp: regexp.getCatch<2>()) printf("2.%u: '%.*s'\n",id++,(int)tmp.length,input.c_str()+tmp.begin);
+					id = 0;
+					for (auto tmp: regexp.getCatch<3>()) printf("3.%u: '%.*s'\n",id++,(int)tmp.length,input.c_str()+tmp.begin);
+					id = 0;
 				}
 			}
 			else
 			{
-				fprintf(stderr,"2. group contains bad data '%.*s'!\n",regexp.getCatch<2>()[0].length,input.c_str()+regexp.getCatch<2>()[0].begin);
+				fprintf(stderr,"2. group contains bad data '%.*s' for '%s'!\n",regexp.getCatch<2>()[0].length,input.c_str()+regexp.getCatch<2>()[0].begin,input.c_str());
+				for (auto tmp: regexp.getCatch<1>()) printf("1.%u: '%.*s'\n",id++,(int)tmp.length,input.c_str()+tmp.begin);
+				id = 0;
+				for (auto tmp: regexp.getCatch<2>()) printf("2.%u: '%.*s'\n",id++,(int)tmp.length,input.c_str()+tmp.begin);
+				id = 0;
+				for (auto tmp: regexp.getCatch<3>()) printf("3.%u: '%.*s'\n",id++,(int)tmp.length,input.c_str()+tmp.begin);
+				id = 0;
 			}
 		}
 		else
 		{
-			fprintf(stderr,"1. group contains bad data '%.*s'!\n",regexp.getCatch<1>()[0].length,input.c_str()+regexp.getCatch<1>()[0].begin);
+			fprintf(stderr,"1. group contains bad data '%.*s' for '%s'!\n",regexp.getCatch<1>()[0].length,input.c_str()+regexp.getCatch<1>()[0].begin,input.c_str());
+			unsigned int id{0};
+			for (auto tmp: regexp.getCatch<1>()) printf("1.%u: '%.*s'\n",id++,(int)tmp.length,input.c_str()+tmp.begin);
+			id = 0;
+			for (auto tmp: regexp.getCatch<2>()) printf("2.%u: '%.*s'\n",id++,(int)tmp.length,input.c_str()+tmp.begin);
+			id = 0;
+			for (auto tmp: regexp.getCatch<3>()) printf("3.%u: '%.*s'\n",id++,(int)tmp.length,input.c_str()+tmp.begin);
+			id = 0;
 		}
 	}
 	else
