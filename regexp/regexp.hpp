@@ -101,12 +101,52 @@ namespace SRX {
 	
 	template <typename CharType> using CompareFnc = bool (*)(const CharType, const CharType, const CharType);
 	
+	// traits
+	
+	template <typename T> struct IsSequence { static constexpr bool value = false; };
+	template <typename T> struct IsDynamicMemory { static constexpr bool value = false; };
+	template <typename T> struct IsStaticMemory { static constexpr size_t value = 0; };
+	
 	// implementation:
+	
+	template <typename T, typename... Rest> struct RightContextHelper
+	{
+		static std::ostream & print(std::ostream & str, T t, Rest... rest)
+		{
+			RightContextHelper<T>::print(str, t);
+			return RightContextHelper<Rest...>::print(str,rest...);
+		}
+	};
+	
+	template <typename T> struct RightContextHelper<T>
+	{
+		static std::ostream & print(std::ostream & str, T t)
+		{
+			t.toString(str);
+			return str;
+		}
+	};
+	
+	template <typename T, typename... Rest> std::ostream & printRightContext(const char * description, std::ostream & str, T t, Rest... rest)
+	{
+		str << description << ": ";
+		RightContextHelper<T,Rest...>::print(str,t,rest...);
+		//printRightContextInner<T, Rest...>(str,t,rest...);
+		str << "\n";
+		return str;
+	}
+	
+	
+	
 	template <typename T> struct Reference
 	{
 		T & target;
 		inline Reference(T & ltarget): target(ltarget) { }
 		inline T & getRef() { return target; }
+		template <bool envelope = true> std::ostream & toString(std::ostream & str) const
+		{
+			return target.template toString<envelope>(str);
+		}
 	};
 	
 	struct CatchReturn;
@@ -134,6 +174,11 @@ namespace SRX {
 		template <unsigned int> inline unsigned int getIdentifier() const
 		{
 			return 0;
+		}
+		template <bool> std::ostream & toString(std::ostream & str) const
+		{
+			str << " Closure";
+			return str;
 		}
 	};
 	
@@ -250,13 +295,15 @@ namespace SRX {
 	
 	template <size_t size> struct CheckMemory<StaticMemory<size>> { static const constexpr bool have = true; };
 	
+	template <size_t size> struct IsStaticMemory<StaticMemory<size>> { static constexpr size_t value = size; };
+	
 	template <size_t size> struct StaticMemory
 	{
 	protected:
 		uint32_t count{0};
 		Catch data[size];
 	public:
-		inline void reset()
+		template <unsigned int> inline void reset()
 		{
 			count = 0;
 		}
@@ -297,13 +344,17 @@ namespace SRX {
 	
 	template <> struct CheckMemory<DynamicMemory> { static const constexpr bool have = true; };
 	
+	template <> struct IsDynamicMemory<DynamicMemory> { static const constexpr bool value = true; };
+	
 	struct DynamicMemory
 	{
 	protected:
 		std::vector<Catch> data;
 	public:
-		inline void reset()
+		template <unsigned int id> inline void reset()
 		{
+			fprintf(stderr,"Reseting %u (%p)...\n",id,this);
+			for (const auto & c: data) fprintf(stderr,"Reset %u -> %u..%u\n",id,c.begin,c.length);
 			data.resize(0);
 		}
 		DynamicMemory & operator=(const DynamicMemory & right)
@@ -356,6 +407,10 @@ namespace SRX {
 		{
 			return 0;
 		}
+		template <bool> std::ostream & toString(std::ostream & str) const
+		{
+			return str << "Begin";
+		}
 	};
 	
 	// struct which represent End $ regexp sign (matching for end-of-input)
@@ -381,6 +436,10 @@ namespace SRX {
 		template <unsigned int> inline unsigned int getIdentifier() const
 		{
 			return 0;
+		}
+		template <bool> std::ostream & toString(std::ostream & str) const
+		{
+			return str << "End";
 		}
 	};
 	
@@ -437,6 +496,15 @@ namespace SRX {
 		{
 			return 0;
 		}
+		template <bool envelope = true> std::ostream & toString(std::ostream & str) const
+		{
+			if (envelope) str << "String<\"";
+			str << (char)firstCode;
+			String<codes...> tmp;
+			tmp.template toString<false>(str);
+			if (envelope) str << "\">";
+			return str;
+		}
 	};
 	
 	// empty string always match if rest of callchain match
@@ -461,6 +529,11 @@ namespace SRX {
 		template <unsigned int> inline unsigned int getIdentifier() const
 		{
 			return 0;
+		}
+		template <bool envelope = true> std::ostream & toString(std::ostream & str) const
+		{
+			if (envelope) str << "String<\"\">";
+			return str;
 		}
 	};
 	
@@ -511,6 +584,19 @@ namespace SRX {
 		{
 			return 0;
 		}
+		template <bool envelope = true> std::ostream & toString(std::ostream & str) const
+		{
+			if (envelope)
+			{
+				str << "[";
+				if (!positive) str << '^';
+			}
+			str << (char)a << '-' << (char)b;
+			CharacterRange<positive,rest...> tmp;
+			tmp.template toString<false>(str);
+			if (envelope) str << "]";
+			return str;
+		}
 	};
 	
 	// empty character range which represent ANY character . sign
@@ -558,6 +644,14 @@ namespace SRX {
 		template <unsigned int> inline unsigned int getIdentifier() const
 		{
 			return 0;
+		}
+		template <bool envelope = true> std::ostream & toString(std::ostream & str) const
+		{
+			if (envelope)
+			{
+				str << "CharacterRange";
+			}
+			return str;
 		}
 	};	
 	
@@ -608,6 +702,19 @@ namespace SRX {
 		{
 			return 0;
 		}
+		template <bool envelope = true> std::ostream & toString(std::ostream & str) const
+		{
+			if (envelope)
+			{
+				str << "[";
+				if (!positive) str << '^';
+			}
+			str << (char)firstCode;
+			CharacterClass<positive,code...> tmp;
+			tmp.template toString<false>(str);
+			if (envelope) str << "]";
+			return str;
+		}
 	};
 	
 	// empty character represents ANY . character
@@ -656,6 +763,14 @@ namespace SRX {
 		{
 			return 0;
 		}
+		template <bool envelope = true> std::ostream & toString(std::ostream & str) const
+		{
+			if (envelope)
+			{
+				str << "CharacterClass";
+			}
+			return str;
+		}
 	};
 	
 	// templated struct which represent catch-of-content braces in regexp, ID is unique identify of this content	
@@ -680,7 +795,7 @@ namespace SRX {
 	};
 	
 	// just one inner regexp variant of catch-of-content
-	template <typename MemoryType> struct Mark
+	template <typename MemoryType, unsigned int id> struct Mark
 	{
 		uint32_t begin;
 		uint32_t len;
@@ -694,10 +809,12 @@ namespace SRX {
 			if (addr >= 0)
 			{
 				memory.set(addr,{begin,len});
+				fprintf(stderr,"mark %u set '%.*s' %u..%u (addr=%d)\n",id,len,string.original+begin,begin,len,addr);
 			}
 			else
 			{
 				addr = memory.add({begin,len});
+				fprintf(stderr,"mark %u added '%.*s' %u..%u (addr=%d)\n",id,len,string.original+begin,begin,len,addr);
 			}
 			return nright.getRef().match(string, move, deep, root, right...);
 			
@@ -718,6 +835,11 @@ namespace SRX {
 			memory = orig.memory;
 			return *this;
 		}
+		template <bool> std::ostream & toString(std::ostream & str) const
+		{
+			str << "Mark<" << id << ">";
+			return str;
+		}
 	};
 	
 	
@@ -726,7 +848,7 @@ namespace SRX {
 		MemoryType memory;
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
 		{
-			Mark<MemoryType> mark{static_cast<uint32_t>(string.getPosition()), memory};
+			Mark<MemoryType, id> mark{static_cast<uint32_t>(string.getPosition()), memory};
 			bool ret{Inner::match(string, move, deep, root, makeRef(mark), nright, right...)};
 			if (!ret)
 			{
@@ -736,7 +858,7 @@ namespace SRX {
 		}
 		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
-			memory.reset();
+			memory.template reset<id>();
 			Inner::reset(nright, right...);
 		}
 		template <unsigned int subid> inline bool getCatch(CatchReturn & catches) const
@@ -751,6 +873,16 @@ namespace SRX {
 		template <unsigned int key> inline unsigned int getIdentifier() const
 		{
 			return Inner::template getIdentifier<key>();
+		}
+		template <bool> std::ostream & toString(std::ostream & str) const
+		{
+			if (IsDynamicMemory<MemoryType>::value) str << "DynamicCatch<" << id << ", ";
+			else if (IsStaticMemory<MemoryType>::value) str << "StaticCatch<" << id << ", size("<<IsStaticMemory<MemoryType>::value<<"), ";
+			else str << "CatchContent<" << id << ", ";
+			if (IsSequence<Inner>::value) Inner::template toString<false>(str);
+			else Inner::template toString<true>(str);
+			str << ">";
+			return str;
 		}
 	};
 	
@@ -798,6 +930,11 @@ namespace SRX {
 		template <unsigned int> inline unsigned int getIdentifier() const
 		{
 			return 0;
+		}
+		template <bool> std::ostream & toString(std::ostream & str) const
+		{
+			str << "ReCatch<" << baseid << ">";
+			return str;
 		}
 	};
 	
@@ -933,6 +1070,9 @@ namespace SRX {
 	};
 	
 	// templated struct which represent sequence of another regexps 
+	
+	template <typename First, typename... Rest> struct IsSequence<Sequence<First,Rest...>> { static constexpr bool value = true; };
+	
 	template <typename First, typename... Rest> struct Sequence<First, Rest...>: public First
 	{
 		Sequence<Rest...> rest;
@@ -958,9 +1098,20 @@ namespace SRX {
 			if (First::template getIdentifier<rkey>()) return First::template getIdentifier<rkey>();
 			else return rest.template getIdentifier<rkey>();
 		}
+		template <bool envelope = true> std::ostream & toString(std::ostream & str) const
+		{
+			if (envelope) str << "Sequence<";
+			First::template toString<true>(str);
+			str << ", ";
+			rest.template toString<false>(str);
+			if (envelope) str << ">";
+			return str;
+		}
 	};
 
 	// sequence of just one inner regexp
+	template <typename First> struct IsSequence<Sequence<First>> { static constexpr bool value = true; };
+	
 	template <typename First> struct Sequence<First>: public First
 	{
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
@@ -983,6 +1134,14 @@ namespace SRX {
 		template <unsigned int rkey> inline unsigned int getIdentifier() const
 		{
 			return First::template getIdentifier<rkey>();
+		}
+		template <bool envelope = true> std::ostream & toString(std::ostream & str) const
+		{
+			if (envelope) str << "Sequence<";
+			if (IsSequence<First>::value) First::template toString<false>(str);
+			else First::template toString<true>(str);
+			if (envelope) str << ">";
+			return str;
 		}
 	};
 	
@@ -1010,8 +1169,23 @@ namespace SRX {
 	};
 	
 	// cycle with just one inner regexp
+	
+	struct RepeatCounter
+	{
+		static unsigned int getID()
+		{
+			static unsigned int id = 0;
+			return ++id;
+		}
+	};
+	
 	template <unsigned int min, unsigned int max, typename Inner> struct Repeat<min, max, Inner>: public Inner
 	{
+		unsigned int id{0};
+		Repeat(): id{RepeatCounter::getID()}
+		{
+			
+		}
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
 		{
 			size_t pos{0};
@@ -1023,19 +1197,30 @@ namespace SRX {
 			Root memoryOfRoot{root};
 			
 			size_t tmp;
-			
+			unsigned int trys{0};
 			for (unsigned int cycle{0}; (!max) || (cycle <= max); ++cycle)
 			{
-				if ((cycle >= min) && nright.getRef().match(string.add(pos), tmp = 0, deep+1, root, right...))
+				if ((cycle >= min))
 				{
-					lastFound = pos + tmp;
-					memoryOfRoot = root; 
-					nright.getRef().reset(right...);
+					// i can calculate end of cycle
+					if (nright.getRef().match(string.add(pos), tmp = 0, deep+1, root, right...))
+					{
+						trys++;
+						std::cout << id << " > " << (string.getPosition()+pos) << " > ";
+						printRightContext("RightContext", std::cout, nright, right...);
+						lastFound = pos + tmp;
+						memoryOfRoot = root; 
+						nright.getRef().reset(right...);
+					}
 				}
+					
 				// in next expression "empty" is needed
 				*this = memoryOfMe;
 				if (Inner::match(string.add(pos), tmp = 0, deep+1, root, makeRef(closure)))
 				{
+					trys++;
+					std::cout << id << " > " << (string.getPosition()+pos) << " > ";
+					printRightContext("Inner", std::cout, makeRef(*this));
 					memoryOfMe = *this;
 					pos += tmp;
 				}
@@ -1043,6 +1228,8 @@ namespace SRX {
 				{
 					if (lastFound >= 0)
 					{
+						std::cout << id << " > " << (string.getPosition()+pos) << " > Done\n";
+						//printRightContext("Inner", std::cout, makeRef(*this));
 						root = memoryOfRoot;
 						DEBUG_PRINTF("cycle done (cycle = %zu)\n",cycle);
 						move += static_cast<size_t>(lastFound);
@@ -1052,6 +1239,7 @@ namespace SRX {
 				}
 				
 			}
+			if (trys) std::cout << id << " > " << (string.getPosition()+pos) << "Fail\n";
 			reset(nright, right...);
 			return false;
 		}
@@ -1067,10 +1255,23 @@ namespace SRX {
 		{
 			return Inner::template getIdentifier<rkey>();
 		}
+		template <bool envelope = true> std::ostream & toString(std::ostream & str) const
+		{
+			if (envelope)
+			{
+				if (min == 1 && max == 0) str << "Plus<";
+				else if (min == 0 && max == 0) str << "Star<";
+				else str << "Repeat<" << min << ',' << max << ',';
+			}
+			if (IsSequence<Inner>::value) Inner::template toString<false>(str);
+			else Inner::template toString<true>(str);
+			if (envelope) str << ">";
+			return str;
+		}
 	};
 	
 	// wrapper for floating matching in string (begin regexp anywhere in string)
-	// without Eat<...> is regexp ABC equivalent to ^ABC$
+	// without Eat<...> is regexp ABC equivalent to ^ABC
 	template <typename... Inner> struct Eat: public Sequence<Inner...>
 	{
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
@@ -1109,6 +1310,13 @@ namespace SRX {
 		template <unsigned int rkey> inline unsigned int getIdentifier() const
 		{
 			return Sequence<Inner...>::template getIdentifier<rkey>();
+		}
+		template <bool envelope = true> std::ostream & toString(std::ostream & str) const
+		{
+			if (envelope) str << "Eat<";
+			Sequence<Inner...>::template toString<false>(str);
+			if (envelope) str << ">";
+			return str;
 		}
 	};
 	
@@ -1205,7 +1413,89 @@ namespace SRX {
 		{
 			return string.substr(getCatch<id>()[subid].begin, getCatch<id>()[subid].length);
 		}
+		std::ostream & toString(std::ostream & str) const
+		{
+			return eat.toString(str);
+		}
 	};
+	
+	template <typename... Definition> std::ostream & operator<<(std::ostream & str, const RegularExpression<Definition...> & regexp)
+	{
+		return regexp.toString(str);
+	}
+	
+	template <typename... Definition> struct RegularExpression2
+	{
+		Sequence<Definition...> eat;
+		void reset()
+		{
+			Closure closure;
+			eat.reset(makeRef(closure));
+		}
+		template <CompareFnc<char> compare = charactersAreEqual<char>> inline bool operator()(std::string string)
+		{
+			size_t pos{0};
+			Closure closure;
+			return eat.match(StringAbstraction<const char *, const char, compare>(string.c_str()), pos, 0, eat, makeRef(closure));
+		}
+		template <CompareFnc<char> compare = charactersAreEqual<char>> inline bool operator()(const char * string)
+		{
+			size_t pos{0};
+			Closure closure;
+			return eat.match(StringAbstraction<const char *, const char, compare>(string), pos, 0, eat, makeRef(closure));
+		}
+		template <CompareFnc<wchar_t> compare = charactersAreEqual<wchar_t>> inline bool operator()(std::wstring string)
+		{
+			size_t pos{0};
+			Closure closure;
+			return eat.match(StringAbstraction<const wchar_t *, const wchar_t, compare>(string.c_str()), pos, 0, eat, makeRef(closure));
+		}
+		template <CompareFnc<wchar_t> compare =  charactersAreEqual<wchar_t>> inline bool operator()(const wchar_t * string)
+		{
+			size_t pos{0};
+			Closure closure;
+			return eat.match(StringAbstraction<const wchar_t *, const wchar_t, compare>(string), pos, 0, eat, makeRef(closure));
+		}
+		template <CompareFnc<char> compare = charactersAreEqual<char>> inline bool match(std::string string)
+		{
+			return operator()<compare>(string);
+		}
+		template <CompareFnc<char> compare = charactersAreEqual<char>> inline bool match(const char * string)
+		{
+			return operator()<compare>(string);
+		}
+		template <CompareFnc<wchar_t> compare = charactersAreEqual<wchar_t>> inline bool match(std::wstring string)
+		{
+			return operator()<compare>(string);
+		}
+		template <CompareFnc<wchar_t> compare = charactersAreEqual<wchar_t>> inline bool match(const wchar_t * string)
+		{
+			return operator()<compare>(string);
+		}
+		template <unsigned int key> unsigned int getIdentifier()
+		{
+			return eat.template getIdentifier<key>();
+		}
+		template <unsigned int id> inline CatchReturn getCatch()
+		{
+			CatchReturn catches;
+			eat.template getCatch<id>(catches);
+			return catches;
+		}
+		template <unsigned int id, typename StringType> inline auto part(const StringType string, unsigned int subid = 0) -> decltype(string)
+		{
+			return string.substr(getCatch<id>()[subid].begin, getCatch<id>()[subid].length);
+		}
+		std::ostream & toString(std::ostream & str) const
+		{
+			return eat.toString(str);
+		}
+	};
+	
+	template <typename... Definition> std::ostream & operator<<(std::ostream & str, const RegularExpression2<Definition...> & regexp)
+	{
+		return regexp.toString(str);
+	}
 }
 
 #endif
