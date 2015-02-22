@@ -14,8 +14,8 @@ bool catchInCatch()
 		//unsigned int count{0};
 		//printf("FIRST = %zu\n", regexp.getCatch<1>().size());
 		//printf("SECOND = %zu\n", regexp.getCatch<2>().size());
-		//for (auto tmp: regexp.getCatch<1>()) printf("FIRST: '%.*s'\n",(int)tmp.length,str+tmp.begin);
-		//for (auto tmp: regexp.getCatch<2>()) printf("SECOND: '%.*s'\n",(int)tmp.length,str+tmp.begin);
+		for (auto tmp: regexp.getCatch<1>()) printf("FIRST: '%.*s'\n",(int)tmp.length,str+tmp.begin);
+		for (auto tmp: regexp.getCatch<2>()) printf("SECOND: '%.*s'\n",(int)tmp.length,str+tmp.begin);
 		//return true;
 		
 		return regexp.getCatch<1>().size() == 1 && regexp.getCatch<2>().size() == 1;

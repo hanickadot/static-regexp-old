@@ -114,6 +114,7 @@ namespace SRX {
 		static std::ostream & print(std::ostream & str, T t, Rest... rest)
 		{
 			RightContextHelper<T>::print(str, t);
+			str << ',';
 			return RightContextHelper<Rest...>::print(str,rest...);
 		}
 	};
@@ -338,6 +339,19 @@ namespace SRX {
 		{
 			return CatchReturn{data, count};
 		}
+		template <size_t rsize> void merge(StaticMemory<rsize> & right)
+		{
+			const unsigned int origCount{count};
+			for (unsigned int i{origCount}; i < size; ++i)
+			{
+				if (i-origCount < right.count)
+				{
+					data[i] = right.data[i-origCount];
+					count++;
+				}
+				else break;
+			}
+		}
 	};
 	
 	// dynamic-allocated memory (based on std::vector) which contains "catched" pairs
@@ -378,6 +392,13 @@ namespace SRX {
 		CatchReturn getCatches() const
 		{
 			return CatchReturn{data.data(), getCount()};
+		}
+		void merge(DynamicMemory & right)
+		{
+			for (const auto it: right.data)
+			{
+				data.push_back(it);
+			}
 		}
 	};
 	
@@ -799,7 +820,7 @@ namespace SRX {
 	{
 		uint32_t begin;
 		uint32_t len;
-		MemoryType & memory;
+		MemoryType memory;
 		int addr{-1};
 		
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
@@ -822,6 +843,10 @@ namespace SRX {
 		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
 			nright.getRef().reset(right...);
+		}
+		Mark(uint32_t lbegin): begin{lbegin}, len{0}
+		{
+			
 		}
 		Mark(uint32_t lbegin, MemoryType & lmemory): begin{lbegin}, len{0}, memory(lmemory)
 		{
@@ -848,11 +873,15 @@ namespace SRX {
 		MemoryType memory;
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
 		{
-			Mark<MemoryType, id> mark{static_cast<uint32_t>(string.getPosition()), memory};
+			Mark<MemoryType, id> mark{static_cast<uint32_t>(string.getPosition())};
 			bool ret{Inner::match(string, move, deep, root, makeRef(mark), nright, right...)};
 			if (!ret)
 			{
 				reset(nright, right...);
+			}
+			else
+			{
+				memory.merge(mark.memory);
 			}
 			return ret;
 		}
@@ -1193,8 +1222,10 @@ namespace SRX {
 			Closure closure;
 			
 			// Less elegant but working :)
-			auto memoryOfMe = *this;
-			Root memoryOfRoot{root};
+			//auto memoryOfMe = *this;
+			AllRightContext<Reference<NearestRight>,Right...> rightContextBefore(nright, right...);
+			AllRightContext<Reference<NearestRight>,Right...> rightContext(nright, right...);
+			//Root memoryOfRoot{root};
 			
 			size_t tmp;
 			unsigned int trys{0};
@@ -1202,26 +1233,30 @@ namespace SRX {
 			{
 				if ((cycle >= min))
 				{
+					//*this = memoryOfMe;
 					// i can calculate end of cycle
+					rightContextBefore.remember(nright, right...);
 					if (nright.getRef().match(string.add(pos), tmp = 0, deep+1, root, right...))
 					{
 						trys++;
 						std::cout << id << " > " << (string.getPosition()+pos) << " > ";
 						printRightContext("RightContext", std::cout, nright, right...);
 						lastFound = pos + tmp;
-						memoryOfRoot = root; 
-						nright.getRef().reset(right...);
+						rightContext.remember(nright, right...);
+						rightContextBefore.restore(nright, right...);
+						//memoryOfRoot = root; 
+						//nright.getRef().reset(right...);
 					}
 				}
 					
 				// in next expression "empty" is needed
-				*this = memoryOfMe;
+				//*this = memoryOfMe;
 				if (Inner::match(string.add(pos), tmp = 0, deep+1, root, makeRef(closure)))
 				{
 					trys++;
 					std::cout << id << " > " << (string.getPosition()+pos) << " > ";
-					printRightContext("Inner", std::cout, makeRef(*this));
-					memoryOfMe = *this;
+					printRightContext("Inner", std::cout, makeRef(*this), makeRef(closure));
+					//memoryOfMe = *this;
 					pos += tmp;
 				}
 				else 
@@ -1230,7 +1265,8 @@ namespace SRX {
 					{
 						std::cout << id << " > " << (string.getPosition()+pos) << " > Done\n";
 						//printRightContext("Inner", std::cout, makeRef(*this));
-						root = memoryOfRoot;
+						//root = memoryOfRoot;
+						rightContext.restore(nright, right...);
 						DEBUG_PRINTF("cycle done (cycle = %zu)\n",cycle);
 						move += static_cast<size_t>(lastFound);
 						return true;
