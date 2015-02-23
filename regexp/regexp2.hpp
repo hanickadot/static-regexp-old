@@ -61,6 +61,7 @@ namespace SRX {
 	template <typename... Parts> struct Sequence; // (abc)
 	template <typename... Options> struct Selection; // (a|b|c)
 	template <unsigned int min, unsigned int max, typename... Inner> struct Repeat; // a{min;max}
+	template <unsigned int min, unsigned int max, typename... Inner> struct XRepeat; // a{min;max}
 	template <typename... Inner> using Plus = Repeat<1,0,Inner...>; // (abc)+
 	template <typename... Inner> using Star = Repeat<0,0,Inner...>; // (abc)*
 	template <typename... Inner> using Optional = Selection<Sequence<Inner...>,Empty>; // a?
@@ -1082,11 +1083,11 @@ namespace SRX {
 			{
 				if ((cycle >= min))
 				{
-					printf("\033[1;34mbefor: "); AllRightContext<Reference<NearestRight>, Right...>::visualize(nright, right...); printf("\033[0m\n");
+					//printf("\033[1;34mbefor: "); AllRightContext<Reference<NearestRight>, Right...>::visualize(nright, right...); printf("\033[0m\n");
 					if (nright.getRef().match(string.add(pos), tmp = 0, deep+1, root, right...))
 					{
 						allRightContext.remember(nright, right...); 
-						printf("\033[0;32mafter: "); allRightContext.visualizeMe(); printf("\033[0m\n");
+						//printf("\033[0;32mafter: "); allRightContext.visualizeMe(); printf("\033[0m\n");
 						lastFound = pos + tmp;
 						nright.getRef().reset(right...);
 						lastFound = pos + tmp;
@@ -1094,7 +1095,7 @@ namespace SRX {
 					}
 					else
 					{
-						printf("\033[1;31mfail: "); AllRightContext<Reference<NearestRight>, Right...>::visualize(nright, right...); printf("\033[0m\n");
+						//printf("\033[1;31mfail: "); AllRightContext<Reference<NearestRight>, Right...>::visualize(nright, right...); printf("\033[0m\n");
 					}
 				}
 				// in next expression "empty" is needed
@@ -1108,6 +1109,7 @@ namespace SRX {
 				{
 					if (lastFound >= 0)
 					{
+						//printf("CYCLE DONE\n");
 						*this = innerContext;
 						allRightContext.restore(nright, right...);
 						DEBUG_PRINTF("cycle done (cycle = %zu)\n",cycle);
@@ -1118,12 +1120,14 @@ namespace SRX {
 				}
 				
 			}
-			reset(nright, right...);
+			//reset(nright, right...);
 			return false;
 		}
 		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
-			Inner::reset(nright, right...);
+			//Inner::reset(nright, right...);
+			//Closure closure;
+			//Inner::reset(makeRef(closure));
 		}
 		template <unsigned int id> inline bool getCatch(CatchReturn & catches) const
 		{

@@ -3,7 +3,7 @@
 
 using namespace SRX;
 
-using TwoCatch = Star<Chr<' '>,DynamicCatch<10,Plus<Chr<'a','b','c'>>, Star<Chr<'X'>>>, Chr<'='>, DynamicCatch<20,Plus<Chr<'i','j','k'>>>>;
+using TwoCatch = Star<Chr<' '>,DynamicCatch<10,Plus<Chr<'a','b','c'>>>, Chr<'='>, DynamicCatch<20,Plus<Chr<'i','j','k'>>>>;
 
 // input ' ab=ij a=i abab=j b=jiji'
 // paths:
@@ -47,7 +47,6 @@ int main ()
 	
 	printf("\n\n\n\nHURAAAAAA\n\n\n\n\n");
 	
-	if (!sameCount(" aX=ik aXXXX=i aXXXX=ijij",3)) return 1;
-	if (!sameCount(" ab=ij",1)) return 1;
+	if (!sameCount(" a=ij",1)) return 1;
 	return 0;
 }
