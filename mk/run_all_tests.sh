@@ -6,8 +6,7 @@ NC='\033[0m'
 
 function silence_cmd
 {
-	./"$1" 
-	#> /dev/null 2> /dev/null
+	./"$1" > /dev/null 2> /dev/null
 	#./"$0" > /dev/null 2> /dev/null
 }
 
