@@ -1221,52 +1221,33 @@ namespace SRX {
 			ssize_t lastFound{-1};
 			Closure closure;
 			
-			// Less elegant but working :)
-			//auto memoryOfMe = *this;
-			AllRightContext<Reference<NearestRight>,Right...> rightContextBefore(nright, right...);
-			AllRightContext<Reference<NearestRight>,Right...> rightContext(nright, right...);
-			//Root memoryOfRoot{root};
+			Repeat<min, max, Inner> innerContext{*this};
+			AllRightContext<Reference<NearestRight>, Right...> allRightContext(nright, right...);
 			
 			size_t tmp;
-			unsigned int trys{0};
+			
 			for (unsigned int cycle{0}; (!max) || (cycle <= max); ++cycle)
 			{
-				if ((cycle >= min))
+				if (nright.getRef().match(string.add(pos), tmp = 0, deep+1, root, right...) && (cycle >= min))
 				{
-					//*this = memoryOfMe;
-					// i can calculate end of cycle
-					rightContextBefore.remember(nright, right...);
-					if (nright.getRef().match(string.add(pos), tmp = 0, deep+1, root, right...))
-					{
-						trys++;
-						std::cout << id << " > " << (string.getPosition()+pos) << " > ";
-						printRightContext("RightContext", std::cout, nright, right...);
-						lastFound = pos + tmp;
-						rightContext.remember(nright, right...);
-						rightContextBefore.restore(nright, right...);
-						//memoryOfRoot = root; 
-						//nright.getRef().reset(right...);
-					}
+					allRightContext.remember(nright, right...);
+					nright.getRef().reset(right...);
+					lastFound = pos + tmp;
+					DEBUG_PRINTF(">> found at %zu\n",lastFound);
 				}
-					
 				// in next expression "empty" is needed
-				//*this = memoryOfMe;
+				*this = innerContext;
 				if (Inner::match(string.add(pos), tmp = 0, deep+1, root, makeRef(closure)))
 				{
-					trys++;
-					std::cout << id << " > " << (string.getPosition()+pos) << " > ";
-					printRightContext("Inner", std::cout, makeRef(*this), makeRef(closure));
-					//memoryOfMe = *this;
+					innerContext = *this;
 					pos += tmp;
 				}
 				else 
 				{
 					if (lastFound >= 0)
 					{
-						std::cout << id << " > " << (string.getPosition()+pos) << " > Done\n";
-						//printRightContext("Inner", std::cout, makeRef(*this));
-						//root = memoryOfRoot;
-						rightContext.restore(nright, right...);
+						*this = innerContext;
+						allRightContext.restore(nright, right...);
 						DEBUG_PRINTF("cycle done (cycle = %zu)\n",cycle);
 						move += static_cast<size_t>(lastFound);
 						return true;
@@ -1275,7 +1256,6 @@ namespace SRX {
 				}
 				
 			}
-			if (trys) std::cout << id << " > " << (string.getPosition()+pos) << "Fail\n";
 			reset(nright, right...);
 			return false;
 		}
