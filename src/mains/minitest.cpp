@@ -8,13 +8,12 @@ int main (int argc, char const *argv[])
     // you can combine sub-regexp into one
     using Protocol = Plus<CRange<'a','z'>>;
     using Domain = Seq<CRange<'a','z'>, Plus<CRange<'a','z','0','9'>>>;
-    RegularExpression2<Protocol, Str<':','/','/'>, Domain, Star<Chr<'.'>, Domain >, Chr<'/'>, End > regexp;
+    RegularExpression<Begin,Protocol, Str<':','/','/'>, Domain, Star<Chr<'.'>, Domain >, Chr<'/'>, End > regexp;
     if (argc >= 2)
     {
         if (regexp(argv[1]))
         {
             printf("yes\n");
-			std::cout << regexp << "\n";
         }
         else
         {

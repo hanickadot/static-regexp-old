@@ -1,4 +1,4 @@
-#include "regexp/regexp2.hpp"
+#include "regexp/regexp.hpp"
 #include <cstdio>
 
 using namespace SRX;
@@ -44,9 +44,6 @@ bool sameCount(const char * str, unsigned int needCount)
 int main ()
 {
 	if (!sameCount(" ab=ij abab=j b=jiji",3)) return 1;
-	
-	printf("\n\n\n\nHURAAAAAA\n\n\n\n\n");
-	
 	if (!sameCount(" aX=ik aXXXX=i aXXXX=ijij",3)) return 1;
 	if (!sameCount(" ab=ij",1)) return 1;
 	return 0;

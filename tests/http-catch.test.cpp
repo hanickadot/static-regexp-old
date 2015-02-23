@@ -1,4 +1,4 @@
-#include "regexp/regexp2.hpp"
+#include "regexp/regexp.hpp"
 #include <cstdio>
 
 using namespace SRX;
@@ -8,7 +8,7 @@ std::string getStringFromCatch(const char * str, Catch ctch)
 	return std::string(str+ctch.begin, ctch.length);
 }
 
-int main (int argc, char const *argv[])
+int main ()
 {
 	using Protocol = OneCatch<1, Plus<CRange<'a','z'>> >;
 	using Domain = OneCatch<2, Plus<CRange<'a','z'>> >;
