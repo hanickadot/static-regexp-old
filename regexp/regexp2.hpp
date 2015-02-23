@@ -157,6 +157,8 @@ namespace SRX {
 		void remember(Reference<Closure>) { }
 		void restore(Reference<Closure>) { }
 		static const constexpr bool haveMemory{false};
+		static void visualize(Reference<Closure>) { }
+		void visualizeMe() const { }
 	};
 	
 	template <typename T, typename... Rest> struct AllRightContext<Reference<T>, Rest...>
@@ -168,7 +170,7 @@ namespace SRX {
 		{
 			if (haveMemory || true)
 			{
-				printf("remember\n");
+				//printf("remember\n");
 				objCopy = ref.getRef();
 				rest.remember(irest...);
 			}
@@ -182,6 +184,16 @@ namespace SRX {
 			}
 		}	
 		static const constexpr bool haveMemory{CheckMemory<T>::have || AllRightContext<Rest...>::haveMemory};
+		void visualizeMe() const
+		{
+			objCopy.visualize();
+			rest.visualizeMe();
+		}
+		static void visualize(Reference<T> ref, Rest... irest)
+		{
+			ref.getRef().visualize();
+			AllRightContext<Rest...>::visualize(irest...);
+		}
 	};
 	
 	
@@ -705,7 +717,7 @@ namespace SRX {
 		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
 		{
 			len = 0;
-			memory.reset();
+			//memory.reset();
 			nright.getRef().reset(right...);
 		}
 		XMark(uint32_t lbegin, MemoryType & lmemory): memory{lmemory}, begin{lbegin}
@@ -726,6 +738,11 @@ namespace SRX {
 			begin = orig.begin;
 			len = orig.len;
 			return *this;
+		}
+		void visualize() const
+		{
+			if (len) printf(" XMark<%u -> (%u,%u)>",id,begin,len-1);
+			else printf(" XMark<%u -> (%u,.)>",id,begin);
 		}
 	};
 	
@@ -768,6 +785,10 @@ namespace SRX {
 		template <unsigned int key> inline unsigned int getIdentifier() const
 		{
 			return Inner::template getIdentifier<key>();
+		}
+		void visualize() const
+		{
+			printf(" CatchContent<%p,%zu>",this,memory.getCount());
 		}
 	};
 	
@@ -975,6 +996,7 @@ namespace SRX {
 			if (First::template getIdentifier<rkey>()) return First::template getIdentifier<rkey>();
 			else return rest.template getIdentifier<rkey>();
 		}
+		void visualize() const { }
 	};
 
 	// sequence of just one inner regexp
@@ -1001,6 +1023,7 @@ namespace SRX {
 		{
 			return First::template getIdentifier<rkey>();
 		}
+		void visualize() const { }
 	};
 	
 	// templated struct which represents generic-loop with min,max limit
@@ -1057,12 +1080,22 @@ namespace SRX {
 			
 			for (unsigned int cycle{0}; (!max) || (cycle <= max); ++cycle)
 			{
-				if (nright.getRef().match(string.add(pos), tmp = 0, deep+1, root, right...) && (cycle >= min))
+				if ((cycle >= min))
 				{
-					allRightContext.remember(nright, right...);
-					nright.getRef().reset(right...);
-					lastFound = pos + tmp;
-					DEBUG_PRINTF(">> found at %zu\n",lastFound);
+					printf("\033[1;34mbefor: "); AllRightContext<Reference<NearestRight>, Right...>::visualize(nright, right...); printf("\033[0m\n");
+					if (nright.getRef().match(string.add(pos), tmp = 0, deep+1, root, right...))
+					{
+						allRightContext.remember(nright, right...); 
+						printf("\033[0;32mafter: "); allRightContext.visualizeMe(); printf("\033[0m\n");
+						lastFound = pos + tmp;
+						nright.getRef().reset(right...);
+						lastFound = pos + tmp;
+						DEBUG_PRINTF(">> found at %zu\n",lastFound);
+					}
+					else
+					{
+						printf("\033[1;31mfail: "); AllRightContext<Reference<NearestRight>, Right...>::visualize(nright, right...); printf("\033[0m\n");
+					}
 				}
 				// in next expression "empty" is needed
 				*this = innerContext;

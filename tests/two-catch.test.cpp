@@ -13,7 +13,7 @@ using TwoCatch = Star<Chr<' '>,DynamicCatch<10,Plus<Chr<'a','b','c'>>, Star<Chr<
 bool sameCount(const char * str, unsigned int needCount)
 {
 	RegularExpression<TwoCatch> regexp;
-	//printf("regexp: '%s'\n", str);
+	printf("regexp: '%s'\n", str);
 	if (regexp(str))
 	{
 		unsigned int a = regexp.getCatch<10>().size();
@@ -43,7 +43,10 @@ bool sameCount(const char * str, unsigned int needCount)
 
 int main ()
 {
-	if (!sameCount(" ab=ij a=i abab=j b=jiji",4)) return 1;
+	if (!sameCount(" ab=ij abab=j b=jiji",4)) return 1;
+	
+	printf("\n\n\n\nHURAAAAAA\n\n\n\n\n");
+	
 	if (!sameCount(" aX=ik aXXXX=i aXXXX=ijij",3)) return 1;
 	if (!sameCount(" ad=ij",1)) return 1;
 	return 0;
