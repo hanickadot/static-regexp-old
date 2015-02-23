@@ -61,6 +61,7 @@ namespace SRX {
 	template <typename... Parts> struct Sequence; // (abc)
 	template <typename... Options> struct Selection; // (a|b|c)
 	template <unsigned int min, unsigned int max, typename... Inner> struct Repeat; // a{min;max}
+	template <unsigned int min, unsigned int max, typename... Inner> struct XRepeat; // a{min;max}
 	template <typename... Inner> using Plus = Repeat<1,0,Inner...>; // (abc)+
 	template <typename... Inner> using Star = Repeat<0,0,Inner...>; // (abc)*
 	template <typename... Inner> using Optional = Selection<Sequence<Inner...>,Empty>; // a?
@@ -119,14 +120,7 @@ namespace SRX {
 		{
 			return true;
 		}
-		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
-		{
-			nright.getRef().reset(right...);
-		}
-		inline void reset()
-		{
-			
-		}
+		inline void reset() { }
 		template <unsigned int> inline bool getCatch(CatchReturn &) const 
 		{
 			return false;
@@ -144,6 +138,11 @@ namespace SRX {
 		static const constexpr bool have = false;
 	};
 	
+	template <typename T> struct CheckMemory<Reference<T>>
+	{
+		static const constexpr bool have = CheckMemory<T>::have;
+	};
+	
 	template <typename... Rest> struct AllRightContext;
 	
 	template <> struct AllRightContext<Reference<Closure>>
@@ -152,6 +151,8 @@ namespace SRX {
 		void remember(Reference<Closure>) { }
 		void restore(Reference<Closure>) { }
 		static const constexpr bool haveMemory{false};
+		static void visualize(Reference<Closure>) { }
+		void visualizeMe() const { }
 	};
 	
 	template <typename T, typename... Rest> struct AllRightContext<Reference<T>, Rest...>
@@ -161,21 +162,31 @@ namespace SRX {
 		AllRightContext(Reference<T> ref, Rest... irest): objCopy{ref.getRef()}, rest{irest...} { }
 		void remember(Reference<T> ref, Rest... irest)
 		{
-			if (haveMemory)
+			if (haveMemory || true)
 			{
-				objCopy = ref.getRef();
+				objCopy = std::move(ref.getRef());
 				rest.remember(irest...);
 			}
 		}
 		void restore(Reference<T> ref, Rest... irest)
 		{
-			if (haveMemory)
+			if (haveMemory || true)
 			{
-				ref.getRef() = objCopy;
+				ref.getRef() = std::move(objCopy);
 				rest.restore(irest...);
 			}
 		}	
 		static const constexpr bool haveMemory{CheckMemory<T>::have || AllRightContext<Rest...>::haveMemory};
+		void visualizeMe() const
+		{
+			objCopy.visualize();
+			rest.visualizeMe();
+		}
+		static void visualize(Reference<T> ref, Rest... irest)
+		{
+			ref.getRef().visualize();
+			AllRightContext<Rest...>::visualize(irest...);
+		}
 	};
 	
 	
@@ -248,8 +259,6 @@ namespace SRX {
 	
 	// static-allocated memory which contains "catched" pairs
 	
-	template <size_t size> struct CheckMemory<StaticMemory<size>> { static const constexpr bool have = true; };
-	
 	template <size_t size> struct StaticMemory
 	{
 	protected:
@@ -260,13 +269,17 @@ namespace SRX {
 		{
 			count = 0;
 		}
-		StaticMemory & operator=(const StaticMemory & right)
+		StaticMemory() = default;
+		StaticMemory(const StaticMemory & right) = default;
+		StaticMemory & operator=(const StaticMemory & right) = default;
+		StaticMemory & operator=(StaticMemory && right)
 		{
 			count = right.count;
 			for (unsigned int i{0}; i != count; ++i)
 			{
 				data[i] = right.data[i];
 			}
+			right.count = 0;
 			return *this;
 		}
 		void set(unsigned int addr, Catch content)
@@ -283,7 +296,7 @@ namespace SRX {
 			}
 			return -1;
 		}
-		uint32_t getCount() const
+		size_t getCount() const
 		{
 			return count;
 		}
@@ -295,8 +308,6 @@ namespace SRX {
 	
 	// dynamic-allocated memory (based on std::vector) which contains "catched" pairs
 	
-	template <> struct CheckMemory<DynamicMemory> { static const constexpr bool have = true; };
-	
 	struct DynamicMemory
 	{
 	protected:
@@ -305,11 +316,6 @@ namespace SRX {
 		inline void reset()
 		{
 			data.resize(0);
-		}
-		DynamicMemory & operator=(const DynamicMemory & right)
-		{
-			data = right.data;
-			return *this;
 		}
 		void set(unsigned int addr, Catch content)
 		{
@@ -344,10 +350,7 @@ namespace SRX {
 			}
 			return false;
 		}
-		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
-		{
-			nright.getRef().reset(right...);
-		}
+		inline void reset() { }
 		template <unsigned int> inline bool getCatch(CatchReturn &) const 
 		{
 			return false;
@@ -370,10 +373,7 @@ namespace SRX {
 			}
 			return false;
 		}
-		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
-		{
-			nright.getRef().reset(right...);
-		}
+		inline void reset() { }
 		template <unsigned int> inline bool getCatch(CatchReturn &) const 
 		{
 			return false;
@@ -425,10 +425,7 @@ namespace SRX {
 			}
 			return false;
 		}
-		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
-		{
-			nright.getRef().reset(right...);
-		}
+		inline void reset() { }
 		template <unsigned int> inline bool getCatch(CatchReturn &) const 
 		{
 			return false;
@@ -450,10 +447,7 @@ namespace SRX {
 		{
 			return true;
 		}
-		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
-		{
-			nright.getRef().reset(right...);
-		}
+		inline void reset() { }
 		template <unsigned int> inline bool getCatch(CatchReturn &) const 
 		{
 			return false;
@@ -478,10 +472,6 @@ namespace SRX {
 					move = pos+1;
 					return true;
 				}
-				else
-				{
-					reset(nright, right...);
-				}
 			}
 			else
 			{
@@ -499,10 +489,7 @@ namespace SRX {
 			else if (!CharacterRange<positive, rest...>::isEmpty && CharacterRange<positive, rest...>::checkChar(string, deep)) return true;
 			else return false;
 		}
-		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
-		{
-			nright.getRef().reset(right...);
-		}
+		inline void reset() { }
 		template <unsigned int> inline bool getCatch(CatchReturn &) const 
 		{
 			return false;
@@ -527,10 +514,6 @@ namespace SRX {
 					move = pos+1;
 					return true;
 				}
-				else
-				{
-					reset(nright, right...);
-				}
 			}
 			else
 			{
@@ -547,10 +530,7 @@ namespace SRX {
 			}
 			return false;
 		}
-		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
-		{
-			nright.getRef().reset(right...);
-		}
+		inline void reset() { }
 		template <unsigned int> inline bool getCatch(CatchReturn &) const 
 		{
 			return false;
@@ -575,10 +555,6 @@ namespace SRX {
 					move = pos+1;
 					return true;
 				}
-				else
-				{
-					reset(nright, right...);
-				}
 			}
 			else
 			{
@@ -596,10 +572,7 @@ namespace SRX {
 			else if (!CharacterClass<positive, code...>::isEmpty && CharacterClass<positive, code...>::checkChar(string, deep)) return true;
 			else return false;
 		}
-		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
-		{
-			nright.getRef().reset(right...);
-		}
+		inline void reset() { }
 		template <unsigned int> inline bool getCatch(CatchReturn &) const 
 		{
 			return false;
@@ -624,10 +597,6 @@ namespace SRX {
 					move = pos+1;
 					return true;
 				}
-				else
-				{
-					reset(nright, right...);
-				}
 			}
 			else
 			{
@@ -644,10 +613,7 @@ namespace SRX {
 			}
 			return false;
 		}
-		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
-		{
-			nright.getRef().reset(right...);
-		}
+		inline void reset() { }
 		template <unsigned int> inline bool getCatch(CatchReturn &) const 
 		{
 			return false;
@@ -659,15 +625,20 @@ namespace SRX {
 	};
 	
 	// templated struct which represent catch-of-content braces in regexp, ID is unique identify of this content	
+	template <unsigned int id, typename MemoryType, typename Inner, typename... Rest> struct CheckMemory<CatchContent<id, MemoryType, Inner, Rest...>>
+	{
+		static const constexpr bool have = true;
+	};
+	
 	template <unsigned int id, typename MemoryType, typename Inner, typename... Rest> struct CatchContent<id, MemoryType, Inner, Rest...>: public CatchContent<id, MemoryType, Seq<Inner,Rest...>>
 	{
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
 		{
 			return CatchContent<id, MemoryType, Seq<Inner,Rest...>>::match(string, move, deep, root, nright, right...);
 		}
-		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
+		inline void reset()
 		{
-			CatchContent<id, MemoryType, Seq<Inner,Rest...>>::reset(nright, right...);
+			CatchContent<id, MemoryType, Seq<Inner,Rest...>>::reset();
 		}
 		template <unsigned int subid> inline bool getCatch(CatchReturn & catches) const
 		{
@@ -680,64 +651,65 @@ namespace SRX {
 	};
 	
 	// just one inner regexp variant of catch-of-content
-	template <typename MemoryType> struct Mark
+	template <unsigned int id, typename MemoryType> struct XMark
 	{
-		uint32_t begin;
-		uint32_t len;
 		MemoryType & memory;
-		int addr{-1};
+		
+		uint32_t begin;
+		uint32_t len{0};
 		
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
 		{
 			// checkpoint => set length
-			len = string.getPosition() - begin;
-			if (addr >= 0)
-			{
-				memory.set(addr,{begin,len});
-			}
-			else
-			{
-				addr = memory.add({begin,len});
-			}
+			len = string.getPosition() - begin + 1;
 			return nright.getRef().match(string, move, deep, root, right...);
 			
 		}
-		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
+		inline void reset()
 		{
-			nright.getRef().reset(right...);
+			len = 0;
 		}
-		Mark(uint32_t lbegin, MemoryType & lmemory): begin{lbegin}, len{0}, memory(lmemory)
+		XMark(uint32_t lbegin, MemoryType & lmemory): memory{lmemory}, begin{lbegin}
 		{
 			
 		}
-		Mark(const Mark & orig) = default;
-		Mark & operator=(const Mark & orig)
+		XMark(const XMark & orig) = default;
+		void transfer(MemoryType & memory) const
+		{
+			if (len)
+			{
+				memory.add({begin,len-1});
+			}
+		}
+		XMark & operator=(const XMark & orig)
 		{
 			begin = orig.begin;
 			len = orig.len;
-			memory = orig.memory;
 			return *this;
 		}
 	};
 	
+	template <unsigned int id, typename MemoryType, typename Inner> struct CheckMemory<CatchContent<id, MemoryType, Inner>>
+	{
+		static const constexpr bool have = true;
+	};
 	
 	template <unsigned int id, typename MemoryType, typename Inner> struct CatchContent<id, MemoryType, Inner>: public Inner
 	{
 		MemoryType memory;
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
 		{
-			Mark<MemoryType> mark{static_cast<uint32_t>(string.getPosition()), memory};
+			XMark<id, MemoryType> mark{static_cast<uint32_t>(string.getPosition()), memory};
 			bool ret{Inner::match(string, move, deep, root, makeRef(mark), nright, right...)};
-			if (!ret)
+			if (ret)
 			{
-				reset(nright, right...);
+				mark.transfer(memory);
 			}
 			return ret;
 		}
-		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
+		inline void reset()
 		{
 			memory.reset();
-			Inner::reset(nright, right...);
 		}
 		template <unsigned int subid> inline bool getCatch(CatchReturn & catches) const
 		{
@@ -775,22 +747,11 @@ namespace SRX {
 						move += ctch->length + tmp;
 						return true;
 					}
-					else
-					{
-						reset(nright, right...);
-					}
-				}
-				else
-				{
-					//printf("subcatch NOT found %u\n",catchid);
 				}
 			}
 			return false;
 		}
-		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
-		{
-			nright.getRef().reset(right...);
-		}
+		inline void reset() { }
 		template <unsigned int> inline bool getCatch(CatchReturn &) const 
 		{
 			return false;
@@ -820,22 +781,11 @@ namespace SRX {
 						move += ctch->length + tmp;
 						return true;
 					}
-					else
-					{
-						reset(nright, right...);
-					}
-				}
-				else
-				{
-					//printf("subcatch NOT found %u\n",catchid);
 				}
 			}
 			return false;
 		}
-		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
-		{
-			nright.getRef().reset(right...);
-		}
+		inline void reset() { }
 		template <unsigned int> inline bool getCatch(CatchReturn &) const 
 		{
 			return false;
@@ -863,10 +813,9 @@ namespace SRX {
 				return false;
 			}
 		}
-		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
+		inline void reset()
 		{
 			matched = false;
-			nright.getRef().reset(right...);
 		}
 		template <unsigned int> inline bool getCatch(CatchReturn &) const
 		{
@@ -890,15 +839,14 @@ namespace SRX {
 			}
 			else
 			{
-				FirstOption::reset(nright, right...);
+				//FirstOption::reset(nright, right...);
 				return rest.match(string, move, deep+1, root, nright, right...);
 			}
 		}
-		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
+		inline void reset()
 		{
-			Closure closure;
-			FirstOption::reset(nright, makeRef(closure));
-			rest.reset(nright, right...);
+			FirstOption::reset();
+			rest.reset();
 		}
 		template <unsigned int id> inline bool getCatch(CatchReturn & catches) const
 		{
@@ -918,10 +866,7 @@ namespace SRX {
 		{
 			return false;
 		}
-		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
-		{
-			nright.getRef().reset(right...);
-		}
+		inline void reset() {}
 		template <unsigned int> inline bool getCatch(CatchReturn &) const 
 		{
 			return false;
@@ -942,12 +887,13 @@ namespace SRX {
 			{
 				return true;
 			}
-			First::reset(nright, right...);
+			//First::reset(nright, right...);
 			return false;
 		}
-		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
+		inline void reset()
 		{
-			First::reset(makeRef(rest), nright, right...);
+			First::reset();
+			rest.reset();
 		}
 		template <unsigned int id> inline bool getCatch(CatchReturn & catches) const
 		{
@@ -969,12 +915,12 @@ namespace SRX {
 			{
 				return true;
 			}
-			First::reset(nright, right...);
+			//First::reset(nright, right...);
 			return false;
 		}
-		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
+		inline void reset()
 		{
-			First::reset(nright, right...);
+			First::reset();
 		}
 		template <unsigned int id> inline bool getCatch(CatchReturn & catches) const
 		{
@@ -995,9 +941,9 @@ namespace SRX {
 		{
 			return Repeat<min, max, Seq<Inner,Rest...>>::match(string, move, deep, root, nright, right...);
 		}
-		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
+		inline void reset()
 		{
-			Repeat<min, max, Seq<Inner,Rest...>>::reset(nright, right...);
+			Repeat<min, max, Seq<Inner,Rest...>>::reset();
 		}
 		template <unsigned int id> inline bool getCatch(CatchReturn & catches) const
 		{
@@ -1010,40 +956,64 @@ namespace SRX {
 	};
 	
 	// cycle with just one inner regexp
+	
+	struct RepeatCounter
+	{
+		static unsigned int getID()
+		{
+			static unsigned int id = 0;
+			return ++id;
+		}
+	};
+	
 	template <unsigned int min, unsigned int max, typename Inner> struct Repeat<min, max, Inner>: public Inner
 	{
+		unsigned int id{0};
+		Repeat(): id{RepeatCounter::getID()}
+		{
+			
+		}
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
 		{
 			size_t pos{0};
 			ssize_t lastFound{-1};
 			Closure closure;
 			
-			// Less elegant but working :)
-			auto memoryOfMe = *this;
-			Root memoryOfRoot{root};
+			Repeat<min, max, Inner> innerContext{*this};
+			AllRightContext<Reference<NearestRight>, Right...> allRightContext{nright, right...};
 			
 			size_t tmp;
 			
 			for (unsigned int cycle{0}; (!max) || (cycle <= max); ++cycle)
 			{
-				if ((cycle >= min) && nright.getRef().match(string.add(pos), tmp = 0, deep+1, root, right...))
+				if ((cycle >= min))
 				{
-					lastFound = pos + tmp;
-					memoryOfRoot = root; 
-					nright.getRef().reset(right...);
+					if (nright.getRef().match(string.add(pos), tmp = 0, deep+1, root, right...))
+					{
+						allRightContext.remember(nright, right...); 
+						//nright.getRef().reset(right...);
+						lastFound = pos + tmp;
+						DEBUG_PRINTF(">> found at %zu\n",lastFound);
+					}
+					else
+					{
+						//printf("\033[1;31mfail: "); AllRightContext<Reference<NearestRight>, Right...>::visualize(nright, right...); printf("\033[0m\n");
+					}
 				}
 				// in next expression "empty" is needed
-				*this = memoryOfMe;
+				*this = innerContext;
 				if (Inner::match(string.add(pos), tmp = 0, deep+1, root, makeRef(closure)))
 				{
-					memoryOfMe = *this;
+					innerContext = *this;
 					pos += tmp;
 				}
 				else 
 				{
 					if (lastFound >= 0)
 					{
-						root = memoryOfRoot;
+						//printf("CYCLE DONE\n");
+						*this = innerContext;
+						allRightContext.restore(nright, right...);
 						DEBUG_PRINTF("cycle done (cycle = %zu)\n",cycle);
 						move += static_cast<size_t>(lastFound);
 						return true;
@@ -1052,12 +1022,11 @@ namespace SRX {
 				}
 				
 			}
-			reset(nright, right...);
 			return false;
 		}
-		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
+		inline void reset()
 		{
-			Inner::reset(nright, right...);
+			Inner::reset();
 		}
 		template <unsigned int id> inline bool getCatch(CatchReturn & catches) const
 		{
@@ -1066,6 +1035,19 @@ namespace SRX {
 		template <unsigned int rkey> inline unsigned int getIdentifier() const
 		{
 			return Inner::template getIdentifier<rkey>();
+		}
+		template <bool envelope = true> std::ostream & toString(std::ostream & str) const
+		{
+			if (envelope)
+			{
+				if (min == 1 && max == 0) str << "Plus<";
+				else if (min == 0 && max == 0) str << "Star<";
+				else str << "Repeat<" << min << ',' << max << ',';
+			}
+			if (false) Inner::template toString<false>(str);
+			else Inner::template toString<true>(str);
+			if (envelope) str << ">";
+			return str;
 		}
 	};
 	
@@ -1092,15 +1074,14 @@ namespace SRX {
 				}
 				else
 				{
-					reset(nright, right...);
 					pos++;
 				}
 			}
 			return false;
 		}
-		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
+		inline void reset()
 		{
-			Sequence<Inner...>::reset(nright, right...);
+			Sequence<Inner...>::reset();
 		}
 		template <unsigned int id> inline bool getCatch(CatchReturn & catches) const
 		{
@@ -1128,9 +1109,9 @@ namespace SRX {
 				return false;
 			}
 		}
-		template <typename NearestRight, typename... Right> inline void reset(Reference<NearestRight> nright, Right... right)
+		inline void reset()
 		{
-			Sequence<Inner...>::reset(nright, right...);
+			Sequence<Inner...>::reset();
 		}
 		template <unsigned int id> inline bool getCatch(CatchReturn & catches) const
 		{
@@ -1148,8 +1129,7 @@ namespace SRX {
 		Eat<Definition...> eat;
 		void reset()
 		{
-			Closure closure;
-			eat.reset(makeRef(closure));
+			eat.reset();
 		}
 		template <CompareFnc<char> compare = charactersAreEqual<char>> inline bool operator()(std::string string)
 		{
