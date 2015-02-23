@@ -26,6 +26,12 @@ bool justOneForEach(const char * str)
 			id = 0;
 			return false;
 		}
+		unsigned int id{0};
+		fprintf(stderr,"input = '%s' (%u)\n",str,count);
+		for (auto tmp: regexp.getCatch<1>()) printf("1.%u: '%.*s'\n",id++,(int)tmp.length,str+tmp.begin);
+		id = 0;
+		for (auto tmp: regexp.getCatch<2>()) printf("2.%u: '%.*s'\n",id++,(int)tmp.length,str+tmp.begin);
+		id = 0;
 		return true;
 	}
 	return false;
