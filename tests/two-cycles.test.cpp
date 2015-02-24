@@ -49,13 +49,14 @@ template <typename RegexpType = TwoCycles> bool testOne(const char * str, std::v
 	if (regexp.match(str))
 	{
 		printf("\n\n###################################################\n\n\n");
+		printf("\n\ntest for '%s'\n",str);
 		unsigned int id{0};
 		
-		for (auto tmp: regexp.template getCatch<0>()) printf("0.%u: '%.*s'\n",id++,(int)tmp.length,str+tmp.begin);
+		for (auto tmp: regexp.template getCatch<0>()) printf("0.%u: '%.*s' %u..%u\n",id++,(int)tmp.length,str+tmp.begin,tmp.begin,tmp.length);
 		id = 0;
-		for (auto tmp: regexp.template getCatch<1>()) printf("1.%u: '%.*s'\n",id++,(int)tmp.length,str+tmp.begin);
+		for (auto tmp: regexp.template getCatch<1>()) printf("1.%u: '%.*s' %u..%u\n",id++,(int)tmp.length,str+tmp.begin,tmp.begin,tmp.length);
 		id = 0;
-		for (auto tmp: regexp.template getCatch<2>()) printf("2.%u: '%.*s'\n",id++,(int)tmp.length,str+tmp.begin);
+		for (auto tmp: regexp.template getCatch<2>()) printf("2.%u: '%.*s' %u..%u\n",id++,(int)tmp.length,str+tmp.begin,tmp.begin,tmp.length);
 		id = 0;
 		
 		checkExpected<0>(str, regexp, expected[0]);
@@ -73,7 +74,7 @@ using TwoCycles2 = Plus<Seq<Chr<' '>,DynamicCatch<0,Plus<Alpha>>,Plus<AlphaNum>,
 
 int main()
 {
-	testOne<TwoCycles2>(" a1a=a ccc=b", {{"a","cc"},{"a","b"}});
+	testOne<TwoCycles2>(" aa1y=x bbb=y", {{"aa","bb"},{"x","y"}});
 	
 	testOne(" abcabc9a=abc", {{"abcabc"},{"9a"},{"abc"}});
 	testOne(" a9a=a", {{"a"},{"9a"},{"a"}});

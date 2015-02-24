@@ -28,6 +28,7 @@
 #include <cstdio>
 #include <functional>
 #include <iostream>
+#include <sstream>
 
 //#define DEBUG	
 	
@@ -47,6 +48,7 @@
 //}
 
 #include "abstraction.hpp"
+#include "support.hpp"
 
 namespace SRX {
 	
@@ -118,7 +120,7 @@ namespace SRX {
 	
 	// last item in recursively called regexp which always return true for match call
 	// it must be always used as last item of call-chain
-	struct Closure
+	template <bool artifical = false> struct Closure
 	{
 		template <typename StringAbstraction, typename Root, typename... Right> inline bool match(const StringAbstraction, size_t &, unsigned int, Root &, Right...)
 		{
@@ -149,22 +151,30 @@ namespace SRX {
 	
 	template <typename... Rest> struct AllRightContext;
 	
-	template <> struct AllRightContext<Reference<Closure>>
+	template <bool artifical> struct AllRightContext<Reference<Closure<artifical>>>
 	{
-		AllRightContext(Reference<Closure>) { }
-		void remember(Reference<Closure>) { }
-		void restore(Reference<Closure>) { }
+		AllRightContext(Reference<Closure<artifical>>) { }
+		void remember(Reference<Closure<artifical>>) { }
+		void restore(Reference<Closure<artifical>>) { }
 		static const constexpr bool haveMemory{false};
-		static void visualize(Reference<Closure>) { }
-		void visualizeMe() const { }
-		template <bool> std::ostream & operator>>(std::ostream & stream) const
+		std::ostream & operator>>(std::ostream & stream) const
 		{
 			return stream;
+		}
+		static std::ostream & printToStream(std::ostream & stream, Reference<Closure<artifical>>)
+		{
+			return stream;
+		}
+		static inline bool haveArtificalEnd()
+		{
+			return artifical;
 		}
 	};
 	
 	template <typename T, typename... Rest> struct AllRightContext<Reference<T>, Rest...>
 	{
+		static const constexpr bool haveMemory{CheckMemory<T>::have || AllRightContext<Rest...>::haveMemory};
+		
 		T objCopy;
 		AllRightContext<Rest...> rest;
 		AllRightContext(Reference<T> ref, Rest... irest): objCopy{ref.getRef()}, rest{irest...} { }
@@ -184,21 +194,19 @@ namespace SRX {
 				rest.restore(irest...);
 			}
 		}	
-		static const constexpr bool haveMemory{CheckMemory<T>::have || AllRightContext<Rest...>::haveMemory};
-		void visualizeMe() const
-		{
-			objCopy.visualize();
-			rest.visualizeMe();
-		}
-		static void visualize(Reference<T> ref, Rest... irest)
-		{
-			ref.getRef().visualize();
-			AllRightContext<Rest...>::visualize(irest...);
-		}
-		template <bool> std::ostream & operator>>(std::ostream & stream) const
+		std::ostream & operator>>(std::ostream & stream) const
 		{
 			objCopy.template operator>><true>(stream);
-			return rest.template operator>><true>(stream);
+			return rest.operator>>(stream);
+		}
+		static std::ostream & printToStream(std::ostream & stream, Reference<T> ref, Rest... irest)
+		{
+			ref.getRef().template operator>><true>(stream);
+			return AllRightContext<Rest...>::printToStream(stream, irest...);
+		}
+		static inline bool haveArtificalEnd()
+		{
+			return AllRightContext<Rest...>::haveArtificalEnd();
 		}
 	};
 	
@@ -317,6 +325,10 @@ namespace SRX {
 		{
 			return CatchReturn{data, count};
 		}
+		template <typename StringAbstraction> std::ostream & printTo(std::ostream & stream, const StringAbstraction & string) const
+		{
+			return stream;
+		}
 	};
 	
 	// dynamic-allocated memory (based on std::vector) which contains "catched" pairs
@@ -346,6 +358,115 @@ namespace SRX {
 		CatchReturn getCatches() const
 		{
 			return CatchReturn{data.data(), getCount()};
+		}
+		DynamicMemory() = default;
+		DynamicMemory(const DynamicMemory & orig): data{orig.data} {
+			RepeatCounter::prefix(std::cout);
+			if (data.size())
+			{
+				std::cout << "\033[0;30;43m copy constructor \033[0m  ";
+				printTo2(std::cout);
+			}
+			else
+			{
+				std::cout << "copy constructor";
+			}
+			std::cout << "\n";
+		}
+		DynamicMemory(DynamicMemory && orig): data{std::move(orig.data)}
+		{
+			RepeatCounter::prefix(std::cout);
+			if (data.size())
+			{
+				std::cout << "\033[0;30;47m move constructor \033[0m  ";
+				printTo2(std::cout);
+			}
+			else
+			{
+				std::cout << "move constructor";
+			}
+			std::cout << "\n";
+		}
+		DynamicMemory & operator=(const DynamicMemory & orig)
+		{
+			RepeatCounter::prefix(std::cout);
+			if (data.size() || orig.data.size())
+			{
+				std::cout << "\033[1;37;43m copy operator \033[0m  ";
+				printTo2(std::cout);
+				std::cout << " <= ";
+				orig.printTo2(std::cout);
+				data = orig.data;
+				std::cout << "  \033[1;37;43m                                     \033[0m  ";
+			}
+			else
+			{
+				std::cout << "copy operator";
+			}
+			std::cout << "\n";
+			return *this;
+		}
+		DynamicMemory & operator=(DynamicMemory && orig)
+		{
+			RepeatCounter::prefix(std::cout);
+			
+			if (data.size() || orig.data.size())
+			{
+				std::cout << "\033[1;37;44m move operator \033[0m  ";
+				printTo2(std::cout);
+				std::cout << " <= ";
+				orig.printTo2(std::cout);
+				data = std::move(orig.data);
+				std::cout << "  \033[1;37;44m                                     \033[0m  ";
+			}
+			else
+			{
+				std::cout << "move operator";
+			}
+			std::cout << "\n";
+			return *this;
+		}
+		~DynamicMemory()
+		{
+			RepeatCounter::prefix(std::cout);
+			if (data.size())
+			{
+				std::cout << "\033[0;30;47m destructor \033[0m  ";
+				printTo2(std::cout);
+			}
+			else
+			{
+				std::cout << "destructor";
+			}
+			std::cout << "\n";
+		}
+		std::ostream & printTo2(std::ostream & stream) const
+		{
+			stream << '{';
+			bool first{true};
+			unsigned int id = 0;
+			for (const auto & ctc: data)
+			{
+				if (first) first = false;
+				else stream << ", ";
+				stream << id++ << ": \033[1;31m" << ctc.begin << ".." << ctc.begin+ctc.length << "\033[0m len="<<ctc.length;
+			}
+			stream << '}';
+			return stream;
+		}
+		template <typename StringAbstraction> std::ostream & printTo(std::ostream & stream, const StringAbstraction & string) const
+		{
+			stream << '{';
+			bool first{true};
+			unsigned int id{0};
+			for (const auto & ctc: data)
+			{
+				if (first) first = false;
+				else stream << ", ";
+				stream << id++ << ": " << ctc.begin << ".." << ctc.length+ctc.length << " '" << std::string(string.original).substr(ctc.begin,ctc.length) << "' len="<<ctc.length;
+			}
+			stream << '}';
+			return stream;
 		}
 	};
 	
@@ -743,11 +864,18 @@ namespace SRX {
 			
 		}
 		XMark(const XMark & orig) = default;
-		void transfer(MemoryType & memory) const
+		template <typename StringAbstraction> void transfer(MemoryType & memory, StringAbstraction & string) const
 		{
 			if (len)
 			{
-				memory.add({begin,len-1});
+				RepeatCounter::prefix(std::cout);
+				std::stringstream ss;
+				memory.printTo(ss, string);
+				auto addr = memory.add({begin,len-1});
+				std::string str = std::string(string.original).substr(begin,len-1);
+				std::cout << "\033[1;41mXMark<"<<id<<"> catch -> " << addr << " -> " << begin << ".." << (begin+len-1) << " len="<<(len-1) << " '\033[0m"<<str<<"\033[1;41m' over ";
+				std::cout << ss.str();
+				std::cout<<"\033[0m\n";
 			}
 		}
 		XMark & operator=(const XMark & orig)
@@ -779,7 +907,7 @@ namespace SRX {
 			bool ret{Inner::match(string, move, deep, root, makeRef(mark), nright, right...)};
 			if (ret)
 			{
-				mark.transfer(memory);
+				mark.transfer(memory, string);
 			}
 			return ret;
 		}
@@ -1077,15 +1205,6 @@ namespace SRX {
 	
 	// cycle with just one inner regexp
 	
-	struct RepeatCounter
-	{
-		static unsigned int getID()
-		{
-			static unsigned int id = 0;
-			return ++id;
-		}
-	};
-	
 	template <unsigned int min, unsigned int max, typename Inner> struct Repeat<min, max, Inner>: public Inner
 	{
 		unsigned int id{0};
@@ -1093,55 +1212,113 @@ namespace SRX {
 		{
 			
 		}
+		std::string identifyMe(const char * suffix = "") const
+		{
+			static char buffer[128];
+			size_t len = snprintf(buffer,128,"\033[0;%02umRepeat<%u>%s\033[0m",31+id,id,suffix);
+			return std::string(buffer,len);
+		}
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
 		{
 			size_t pos{0};
 			ssize_t lastFound{-1};
-			Closure closure;
+			Closure<true> closure;
 			
 			Repeat<min, max, Inner> innerContext{*this};
 			AllRightContext<Reference<NearestRight>, Right...> allRightContext{nright, right...};
 			
 			size_t tmp;
 			
+			RepeatCounter::prefix(std::cout);
+			std::cout << identifyMe() << " -> enter { ";
+			Inner::template operator>><true>(std::cout);
+			std::cout << " } . . . . . ";
+			allRightContext >> std::cout;
+			std::cout << "\n";
+			
+			RepeatCounter::enter();
+			
 			for (unsigned int cycle{0}; (!max) || (cycle <= max); ++cycle)
 			{
 				if ((cycle >= min))
 				{
+					RepeatCounter::prefix(std::cout);
+					std::cout << identifyMe("::right") <<" -> going in...\n";
+					RepeatCounter::enter();
 					if (nright.getRef().match(string.add(pos), tmp = 0, deep+1, root, right...))
 					{
 						allRightContext.remember(nright, right...); 
+						
+						RepeatCounter::leave();
+						RepeatCounter::prefix(std::cout);
+						std::cout << ' ' << identifyMe("::right") <<" -> OK -> ";
+						allRightContext >> std::cout;
+						std::cout << '\n';
+						
+						
 						//nright.getRef().reset(right...);
 						lastFound = pos + tmp;
 						DEBUG_PRINTF(">> found at %zu\n",lastFound);
 					}
 					else
 					{
+						RepeatCounter::leave();
+						RepeatCounter::prefix(std::cout);
+						std::cout << ' ' << identifyMe("::right") <<" -> fail -> ";
+						allRightContext >> std::cout;
+						std::cout << '\n';
 						//printf("\033[1;31mfail: "); AllRightContext<Reference<NearestRight>, Right...>::visualize(nright, right...); printf("\033[0m\n");
 					}
 				}
 				// in next expression "empty" is needed
 				*this = innerContext;
+				RepeatCounter::prefix(std::cout);
+				std::cout << identifyMe("::inner") <<" -> going in...\n";
+				RepeatCounter::enter();
 				if (Inner::match(string.add(pos), tmp = 0, deep+1, root, makeRef(closure)))
 				{
+					RepeatCounter::leave();
+					RepeatCounter::prefix(std::cout);
+					std::cout << ' ' << identifyMe("::inner") <<" -> OK -> ";
+					Inner::template operator>><true>(std::cout);
+					std::cout << '\n';
 					innerContext = *this;
 					pos += tmp;
 				}
 				else 
 				{
+					RepeatCounter::leave();
+					RepeatCounter::prefix(std::cout);
+					std::cout << ' ' << identifyMe("::inner") <<" -> fail -> ";
+					Inner::template operator>><true>(std::cout);
+					std::cout << '\n';
+					
 					if (lastFound >= 0)
 					{
 						//printf("CYCLE DONE\n");
 						*this = innerContext;
+						
 						allRightContext.restore(nright, right...);
 						DEBUG_PRINTF("cycle done (cycle = %zu)\n",cycle);
 						move += static_cast<size_t>(lastFound);
+						RepeatCounter::leave();
+						RepeatCounter::prefix(std::cout);
+						
+						std::cout << identifyMe() << " => TRUE";
+						
+						if (allRightContext.haveArtificalEnd()) std::cout << " ARTIFICAL";
+						
+						std::cout << "\n";
 						return true;
 					}
 					else break;
 				}
 				
 			}
+			RepeatCounter::leave();
+			RepeatCounter::prefix(std::cout);
+			
+			std::cout << identifyMe() << " => false\n";
 			return false;
 		}
 		inline void reset()
@@ -1171,9 +1348,9 @@ namespace SRX {
 		}
 		template <bool> inline std::ostream & operator>>(std::ostream & stream) const
 		{
-			if (min == 1 && max == 0) stream << "\033[1;35mR+<\033[0m";
-			else if (min == 0 && max == 0) stream << "\033[1;35mR*<\033[0m";
-			else stream << "\033[1;35mRn<" << min << '-' << max << ':' << "\033[0m ";
+			if (min == 1 && max == 0) stream << "\033[1;35mR+("<< id <<")<\033[0m";
+			else if (min == 0 && max == 0) stream << "\033[1;35mR*("<< id <<")<\033[0m";
+			else stream << "\033[1;35mRn("<< id <<")<" << min << '-' << max << ':' << "\033[0m ";
 			Inner::template operator>><!IsSequence<Inner>::value>(stream);
 			return stream << "\033[1;35m>\033[0m";
 		}
@@ -1269,25 +1446,25 @@ namespace SRX {
 		template <CompareFnc<char> compare = charactersAreEqual<char>> inline bool operator()(std::string string)
 		{
 			size_t pos{0};
-			Closure closure;
+			Closure<false> closure;
 			return eat.match(StringAbstraction<const char *, const char, compare>(string.c_str()), pos, 0, eat, makeRef(closure));
 		}
 		template <CompareFnc<char> compare = charactersAreEqual<char>> inline bool operator()(const char * string)
 		{
 			size_t pos{0};
-			Closure closure;
+			Closure<false> closure;
 			return eat.match(StringAbstraction<const char *, const char, compare>(string), pos, 0, eat, makeRef(closure));
 		}
 		template <CompareFnc<wchar_t> compare = charactersAreEqual<wchar_t>> inline bool operator()(std::wstring string)
 		{
 			size_t pos{0};
-			Closure closure;
+			Closure<false> closure;
 			return eat.match(StringAbstraction<const wchar_t *, const wchar_t, compare>(string.c_str()), pos, 0, eat, makeRef(closure));
 		}
 		template <CompareFnc<wchar_t> compare =  charactersAreEqual<wchar_t>> inline bool operator()(const wchar_t * string)
 		{
 			size_t pos{0};
-			Closure closure;
+			Closure<false> closure;
 			return eat.match(StringAbstraction<const wchar_t *, const wchar_t, compare>(string), pos, 0, eat, makeRef(closure));
 		}
 		template <CompareFnc<char> compare = charactersAreEqual<char>> inline bool match(std::string string)
