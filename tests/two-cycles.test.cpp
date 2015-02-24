@@ -45,8 +45,10 @@ template <typename RegexpType = TwoCycles> bool testOne(const char * str, std::v
 	RegularExpression<Begin,RegexpType,End> regexp;
 	ss << regexp;
 	printf("regexp: %s\n",ss.str().c_str());
+	printf("\n\n\n###################################################\n\n");
 	if (regexp.match(str))
 	{
+		printf("\n\n###################################################\n\n\n");
 		unsigned int id{0};
 		
 		for (auto tmp: regexp.template getCatch<0>()) printf("0.%u: '%.*s'\n",id++,(int)tmp.length,str+tmp.begin);

@@ -157,6 +157,10 @@ namespace SRX {
 		static const constexpr bool haveMemory{false};
 		static void visualize(Reference<Closure>) { }
 		void visualizeMe() const { }
+		template <bool> std::ostream & operator>>(std::ostream & stream) const
+		{
+			return stream;
+		}
 	};
 	
 	template <typename T, typename... Rest> struct AllRightContext<Reference<T>, Rest...>
@@ -190,6 +194,11 @@ namespace SRX {
 		{
 			ref.getRef().visualize();
 			AllRightContext<Rest...>::visualize(irest...);
+		}
+		template <bool> std::ostream & operator>>(std::ostream & stream) const
+		{
+			objCopy.template operator>><true>(stream);
+			return rest.template operator>><true>(stream);
 		}
 	};
 	
@@ -1324,7 +1333,7 @@ namespace SRX {
 	
 	template <typename... Definition> std::ostream & operator<<(std::ostream & stream, const RegularExpression<Definition...> & regexp)
 	{
-		return regexp.template operator>><true>(stream);
+		return regexp.template operator>><false>(stream);
 	}
 }
 
