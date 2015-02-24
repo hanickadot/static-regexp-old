@@ -67,13 +67,12 @@ using TwoCycles2 = Plus<Seq<Chr<' '>,DynamicCatch<0,Plus<Alpha>>,Plus<AlphaNum>,
 
 int main()
 {
-	RegularExpression<Begin,TwoCycles,End> regexp;
+	testOne<TwoCycles2>(" a1a=a ccc=b", {{"a","cc"},{"a","b"}});
 	
 	testOne(" abcabc9a=abc", {{"abcabc"},{"9a"},{"abc"}});
 	testOne(" a9a=a", {{"a"},{"9a"},{"a"}});
 	testOne(" a1a=a b2b=b", {{"a","b"},{"1a","2b"},{"a","b"}});
 	testOne(" a1a=a b2b=b c3c=c", {{"a","b","c"},{"1a","2b","3c"},{"a","b","c"}});
-	testOne<TwoCycles2>(" a1a=a ccc=b", {{"a","cc"},{"a","b"}});
 	testOne(" a1a=a ccc=b", {{"a","cc"},{"1a","c"},{"a","b"}});
 	
 	return 0;
