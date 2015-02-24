@@ -1175,7 +1175,7 @@ namespace SRX {
 		{
 			return eat.template getIdentifier<key>();
 		}
-		template <unsigned int id> inline CatchReturn getCatch()
+		template <unsigned int id> inline CatchReturn getCatch() const
 		{
 			CatchReturn catches;
 			eat.template getCatch<id>(catches);
