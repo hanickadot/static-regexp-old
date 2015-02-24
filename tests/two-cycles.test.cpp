@@ -1,4 +1,5 @@
 #include <regexp/regexp.hpp>
+#include <sstream>
 
 using namespace SRX;
 
@@ -39,8 +40,11 @@ template <unsigned int id, typename Regexp> bool checkExpected(const char * str,
 
 template <typename RegexpType = TwoCycles> bool testOne(const char * str, std::vector<std::vector<const std::string>> && expected)
 {
+	std::stringstream ss;
 	printf("\n\ntest for '%s'\n",str);
 	RegularExpression<Begin,RegexpType,End> regexp;
+	ss << regexp;
+	printf("regexp: %s\n",ss.str().c_str());
 	if (regexp.match(str))
 	{
 		unsigned int id{0};

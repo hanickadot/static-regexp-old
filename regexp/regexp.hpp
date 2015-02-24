@@ -102,6 +102,10 @@ namespace SRX {
 	
 	template <typename CharType> using CompareFnc = bool (*)(const CharType, const CharType, const CharType);
 	
+	// Checking if subregexp is sequence
+	
+	template <typename T> struct IsSequence { static constexpr bool value = false; };
+	
 	// implementation:
 	template <typename T> struct Reference
 	{
@@ -359,6 +363,10 @@ namespace SRX {
 		{
 			return 0;
 		}
+		template <bool> inline std::ostream & operator>>(std::ostream & stream) const
+		{
+			return stream << "\033[1;33m^\033[0m";
+		}
 	};
 	
 	// struct which represent End $ regexp sign (matching for end-of-input)
@@ -381,6 +389,10 @@ namespace SRX {
 		template <unsigned int> inline unsigned int getIdentifier() const
 		{
 			return 0;
+		}
+		template <bool> inline std::ostream & operator>>(std::ostream & stream) const
+		{
+			return stream << "\033[1;33m$\033[0m";
 		}
 	};
 	
@@ -434,6 +446,17 @@ namespace SRX {
 		{
 			return 0;
 		}
+		template <bool encapsulated> inline std::ostream & operator>>(std::ostream & stream) const
+		{
+			//stream << "String<";
+			if (encapsulated) stream << "\"";
+			stream << static_cast<char>(firstCode);
+			String<codes...> tmp;
+			tmp.template operator>><false>(stream);
+			if (encapsulated) stream << "\"";
+			//stream << '>';
+			return stream;
+		}
 	};
 	
 	// empty string always match if rest of callchain match
@@ -455,6 +478,11 @@ namespace SRX {
 		template <unsigned int> inline unsigned int getIdentifier() const
 		{
 			return 0;
+		}
+		template <bool encapsulated> inline std::ostream & operator>>(std::ostream & stream) const
+		{
+			if (encapsulated) return stream << "\033[1;33mEmpty\033[0m";
+			else return stream;
 		}
 	};
 	
@@ -498,6 +526,18 @@ namespace SRX {
 		{
 			return 0;
 		}
+		template <bool encapsulated> inline std::ostream & operator>>(std::ostream & stream) const
+		{
+			if (encapsulated) { 
+				stream << '[';
+				if (!positive) stream << '^';
+			}
+			stream << static_cast<char>(a) << '-' << static_cast<char>(b);
+			CharacterRange<positive, rest...> tmp;
+			tmp.template operator>><false>(stream);
+			if (encapsulated) stream << ']';
+			return stream;
+		}
 	};
 	
 	// empty character range which represent ANY character . sign
@@ -538,6 +578,10 @@ namespace SRX {
 		template <unsigned int> inline unsigned int getIdentifier() const
 		{
 			return 0;
+		}
+		template <bool> inline std::ostream & operator>>(std::ostream & stream) const
+		{
+			return stream;
 		}
 	};	
 	
@@ -581,6 +625,18 @@ namespace SRX {
 		{
 			return 0;
 		}
+		template <bool encapsulated> inline std::ostream & operator>>(std::ostream & stream) const
+		{
+			if (encapsulated) { 
+				stream << '[';
+				if (!positive) stream << '^';
+			}
+			stream << static_cast<char>(firstCode);
+			CharacterClass<positive, code...> tmp;
+			if (!CharacterClass<positive, code...>::isEmpty) tmp.template operator>><false>(stream);
+			if (encapsulated) stream << ']';
+			return stream;
+		}
 	};
 	
 	// empty character represents ANY . character
@@ -621,6 +677,10 @@ namespace SRX {
 		template <unsigned int> inline unsigned int getIdentifier() const
 		{
 			return 0;
+		}
+		template <bool> inline std::ostream & operator>>(std::ostream & stream) const
+		{
+			return stream << "\033[1;33mAny\033[0m";
 		}
 	};
 	
@@ -687,6 +747,13 @@ namespace SRX {
 			len = orig.len;
 			return *this;
 		}
+		template <bool> inline std::ostream & operator>>(std::ostream & stream) const
+		{
+			stream << "XMark<" << id << ':' << ' ' << begin << '.' << '.';
+			if (len) stream << (len-1) << '>';
+			else stream << '?' << '>';
+			return stream;
+		}
 	};
 	
 	template <unsigned int id, typename MemoryType, typename Inner> struct CheckMemory<CatchContent<id, MemoryType, Inner>>
@@ -723,6 +790,13 @@ namespace SRX {
 		template <unsigned int key> inline unsigned int getIdentifier() const
 		{
 			return Inner::template getIdentifier<key>();
+		}
+		template <bool> inline std::ostream & operator>>(std::ostream & stream) const
+		{
+			stream << "\033[0;32mCatch<" << id << ':' << "\033[0m ";
+			Inner::template operator>><!IsSequence<Inner>::value>(stream);
+			stream << "\033[0;32m>\033[0m";
+			return stream;
 		}
 	};
 	
@@ -825,6 +899,10 @@ namespace SRX {
 		{
 			return matched ? (key == rkey ? value : 0) : 0;
 		}
+		template <bool> inline std::ostream & operator>>(std::ostream & stream) const
+		{
+			return stream << "Identifier<" << key << ',' << value << '>';
+		}
 	};
 	
 	// temlated struct which represent selection in regexp (a|b|c)
@@ -857,6 +935,15 @@ namespace SRX {
 			if (FirstOption::template getIdentifier<rkey>()) return FirstOption::template getIdentifier<rkey>();
 			else return rest.template getIdentifier<rkey>();
 		}
+		template <bool encapsulated> inline std::ostream & operator>>(std::ostream & stream) const
+		{
+			if (encapsulated) stream << "\033[1;34mSel<\033[0m";
+			else stream << "\033[1;34m | \033[0m";
+			FirstOption::template operator>><true>(stream);
+			rest.template operator>><false>(stream);
+			if (encapsulated) stream << "\033[1;34m>\033[0m";
+			return stream;
+		}
 	};
 	
 	// empty selection always fail
@@ -875,9 +962,15 @@ namespace SRX {
 		{
 			return 0;
 		}
+		template <bool> inline std::ostream & operator>>(std::ostream & stream) const
+		{
+			return stream;
+		}
 	};
 	
 	// templated struct which represent sequence of another regexps 
+	template <typename First, typename... Rest> struct IsSequence<Sequence<First, Rest...>> { static constexpr bool value = true; };
+	
 	template <typename First, typename... Rest> struct Sequence<First, Rest...>: public First
 	{
 		Sequence<Rest...> rest;
@@ -904,9 +997,20 @@ namespace SRX {
 			if (First::template getIdentifier<rkey>()) return First::template getIdentifier<rkey>();
 			else return rest.template getIdentifier<rkey>();
 		}
+		template <bool encapsulated> inline std::ostream & operator>>(std::ostream & stream) const
+		{
+			if (encapsulated) stream << "\033[1;30mSeq<\033[0m";
+			First::template operator>><!IsSequence<First>::value>(stream);
+			stream << "\033[1;30m,\033[0m ";
+			rest.template operator>><false>(stream);
+			if (encapsulated) stream << "\033[1;30m>\033[0m";
+			return stream;
+		}
 	};
 
 	// sequence of just one inner regexp
+	template <typename First> struct IsSequence<Sequence<First>> { static constexpr bool value = true; };
+	
 	template <typename First> struct Sequence<First>: public First
 	{
 		template <typename StringAbstraction, typename Root, typename NearestRight, typename... Right> inline bool match(const StringAbstraction string, size_t & move, unsigned int deep, Root & root, Reference<NearestRight> nright, Right... right)
@@ -929,6 +1033,13 @@ namespace SRX {
 		template <unsigned int rkey> inline unsigned int getIdentifier() const
 		{
 			return First::template getIdentifier<rkey>();
+		}
+		template <bool encapsulated> inline std::ostream & operator>>(std::ostream & stream) const
+		{
+			if (encapsulated) stream << "\033[1;30mSeq<\033[0m";
+			First::template operator>><!IsSequence<First>::value>(stream);
+			if (encapsulated) stream << "\033[1;30m>\033[0m";
+			return stream;
 		}
 	};
 	
@@ -1040,14 +1151,22 @@ namespace SRX {
 		{
 			if (envelope)
 			{
-				if (min == 1 && max == 0) str << "Plus<";
-				else if (min == 0 && max == 0) str << "Star<";
-				else str << "Repeat<" << min << ',' << max << ',';
+				if (min == 1 && max == 0) str << "R+<";
+				else if (min == 0 && max == 0) str << "R*<";
+				else str << "Rn<" << min << ',' << max << ',';
 			}
 			if (false) Inner::template toString<false>(str);
 			else Inner::template toString<true>(str);
 			if (envelope) str << ">";
 			return str;
+		}
+		template <bool> inline std::ostream & operator>>(std::ostream & stream) const
+		{
+			if (min == 1 && max == 0) stream << "\033[1;35mR+<\033[0m";
+			else if (min == 0 && max == 0) stream << "\033[1;35mR*<\033[0m";
+			else stream << "\033[1;35mRn<" << min << '-' << max << ':' << "\033[0m ";
+			Inner::template operator>><!IsSequence<Inner>::value>(stream);
+			return stream << "\033[1;35m>\033[0m";
 		}
 	};
 	
@@ -1090,6 +1209,13 @@ namespace SRX {
 		template <unsigned int rkey> inline unsigned int getIdentifier() const
 		{
 			return Sequence<Inner...>::template getIdentifier<rkey>();
+		}
+		template <bool encapsulated> inline std::ostream & operator>>(std::ostream & stream) const
+		{
+			if (encapsulated) stream << "Eat<";
+			Sequence<Inner...>::template operator>><false>(stream);
+			if (encapsulated) stream << ">";
+			return stream;
 		}
 	};
 	
@@ -1185,7 +1311,21 @@ namespace SRX {
 		{
 			return string.substr(getCatch<id>()[subid].begin, getCatch<id>()[subid].length);
 		}
+		template <bool encapsulated> inline std::ostream & operator>>(std::ostream & stream) const
+		{
+			//stream << "\033[0;32m";
+			if (encapsulated) stream << "RE<";
+			eat.template operator>><false>(stream);
+			if (encapsulated) stream << ">";
+			//stream << "\033[0m";
+			return stream;
+		}
 	};
+	
+	template <typename... Definition> std::ostream & operator<<(std::ostream & stream, const RegularExpression<Definition...> & regexp)
+	{
+		return regexp.template operator>><true>(stream);
+	}
 }
 
 #endif
