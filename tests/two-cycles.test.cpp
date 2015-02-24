@@ -70,7 +70,7 @@ template <typename RegexpType = TwoCycles> bool testOne(const char * str, std::v
 	return false;
 }
 
-using TwoCycles2 = Plus<Seq<Chr<' '>,DynamicCatch<0,Plus<Alpha>>,Plus<AlphaNum>,Chr<'='>,DynamicCatch<1,Alpha>>>;
+using TwoCycles2 = Repeat<2,2,Seq<Chr<' '>,DynamicCatch<0,Plus<Alpha>>,Plus<AlphaNum>,Chr<'='>,DynamicCatch<1,Alpha>>>;
 
 int main()
 {

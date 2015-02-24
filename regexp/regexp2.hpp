@@ -221,6 +221,14 @@ namespace SRX {
 	{
 		uint32_t begin;
 		uint32_t length;
+		inline bool operator==(const Catch & right) const
+		{
+			return begin == right.begin;
+		}
+		inline bool operator<(const Catch & right) const
+		{
+			return begin < right.begin;
+		}
 	};
 	
 	// object which represent all of "catched" pairs, support for range-based FOR
@@ -416,7 +424,21 @@ namespace SRX {
 				printTo2(std::cout);
 				std::cout << " <= ";
 				orig.printTo2(std::cout);
-				data = std::move(orig.data);
+				for (auto & item: orig.data)
+				{
+					bool can{true};
+					for (auto & item2: data)
+					{
+						if (item == item2)
+						{
+							can = false;
+							break;
+						}
+					}
+					if (can) data.push_back(item);
+				}
+				std::sort(data.begin(), data.end());
+				orig.data.resize(0);
 				std::cout << "  \033[1;37;44m                                     \033[0m  ";
 			}
 			else
@@ -1247,7 +1269,14 @@ namespace SRX {
 					RepeatCounter::enter();
 					if (nright.getRef().match(string.add(pos), tmp = 0, deep+1, root, right...))
 					{
+						RepeatCounter::prefix(std::cout);
+						std::cout << "Save after right... " << (allRightContext.haveArtificalEnd()?"yes":"no")<<"\n";
+						
 						allRightContext.remember(nright, right...); 
+						
+						RepeatCounter::prefix(std::cout);
+						std::cout << "Save after right (done)\n";
+						
 						
 						RepeatCounter::leave();
 						RepeatCounter::prefix(std::cout);
@@ -1271,18 +1300,30 @@ namespace SRX {
 					}
 				}
 				// in next expression "empty" is needed
+				RepeatCounter::prefix(std::cout);
+				std::cout << "Restore before inner:\n";
 				*this = innerContext;
+				RepeatCounter::prefix(std::cout);
+				std::cout << "Restore before inner (done)\n";
 				RepeatCounter::prefix(std::cout);
 				std::cout << identifyMe("::inner") <<" -> going in...\n";
 				RepeatCounter::enter();
 				if (Inner::match(string.add(pos), tmp = 0, deep+1, root, makeRef(closure)))
 				{
 					RepeatCounter::leave();
+					
+					RepeatCounter::prefix(std::cout);
+					std::cout << "Save after success inner:\n";
+					innerContext = *this;
+					RepeatCounter::prefix(std::cout);
+					std::cout << "Save after success inner (done)\n";
+					
+					
 					RepeatCounter::prefix(std::cout);
 					std::cout << ' ' << identifyMe("::inner") <<" -> OK -> ";
 					Inner::template operator>><true>(std::cout);
 					std::cout << '\n';
-					innerContext = *this;
+					
 					pos += tmp;
 				}
 				else 
@@ -1296,7 +1337,11 @@ namespace SRX {
 					if (lastFound >= 0)
 					{
 						//printf("CYCLE DONE\n");
+						RepeatCounter::prefix(std::cout);
+						std::cout << "Found move:\n";
 						*this = innerContext;
+						RepeatCounter::prefix(std::cout);
+						std::cout << "Found move (done)\n";
 						
 						allRightContext.restore(nright, right...);
 						DEBUG_PRINTF("cycle done (cycle = %zu)\n",cycle);
